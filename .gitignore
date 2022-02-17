@@ -1,0 +1,8 @@
+.devcontainer/
+.terraform/
+builds/
+
+*.tfvars
+*.tfstate
+*.hcl
+*.backup
