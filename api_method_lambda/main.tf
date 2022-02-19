@@ -50,18 +50,6 @@ module "lambda" {
 
   role_name = "${var.prefix}-${var.name}-${var.http_method}-role"
 
-  assume_role_policy_statements = {
-    lambda = {
-      actions = ["sts:AssumeRole"]
-      principals = {
-        lambda_principal = {
-          type = "Service"
-          identifiers = ["lambda.amazonaws.com"]
-        }
-      }
-    }
-  }
-
   publish = true
   allowed_triggers = {
     api_gateway = {

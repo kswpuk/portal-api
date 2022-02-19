@@ -32,17 +32,7 @@ module "members_GET" {
 }
 END
 
-  response_template = <<END
-#set($inputRoot = $input.path('$'))
-[
-#foreach($item in $inputRoot.Items) {
-  #foreach($key in $item.keySet())
-    "$key": "$item.get($key).S" #if($foreach.hasNext),#end
-  #end
-} #if($foreach.hasNext),#end
-#end
-]
-END
+  response_template = local.dynamodb_to_array_vtl
 }
 
 # /members/{id}
@@ -84,14 +74,7 @@ module "members_id_GET" {
 }
 END
 
-  response_template = <<END
-#set($item = $input.path('$.Items[0]'))
-{
-  #foreach($key in $item.keySet())
-    "$key": "$item.get($key).S" #if($foreach.hasNext),#end
-  #end
-}
-END
+  response_template = local.dynamodb_to_item_vtl
 }
 
 module "members_id_DELETE" {

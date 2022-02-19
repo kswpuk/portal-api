@@ -1,6 +1,38 @@
+# Logging
+resource "aws_api_gateway_account" "portal" {
+  cloudwatch_role_arn = aws_iam_role.agw_cloudwatch.arn
+}
+
+resource "aws_iam_role" "agw_cloudwatch" {
+  name = "${var.prefix}-api_gateway_cloudwatch-role"
+  assume_role_policy = data.aws_iam_policy_document.agw_assume_role_policy.json
+}
+
+resource "aws_iam_role_policy" "cloudwatch" {
+  name = "${var.prefix}-api_gateway_cloudwatch-policy"
+  role = aws_iam_role.agw_cloudwatch.id
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+# API Gateway
 resource "aws_api_gateway_rest_api" "portal" {
   name = "${var.prefix}-api"
   description = "REST API for QSWP Portal"
+  binary_media_types = ["image/*"]
 }
 
 resource "aws_api_gateway_deployment" "portal" {
@@ -8,11 +40,12 @@ resource "aws_api_gateway_deployment" "portal" {
 
   # FIXME: Doesn't trigger new deployments on change
   triggers = {
-    modules = sha1(jsonencode([
-      module.members_GET,
-      module.members_id_GET,
-      module.members_id_DELETE
-      # module.members_id_photo
+    modules = sha1(join("", [
+      jsonencode(module.members_GET),
+      jsonencode(module.members_id_GET),
+      jsonencode(module.members_id_DELETE),
+      jsonencode(module.members_id_PUT),
+      jsonencode(module.members_id_photo_GET)
     ]))
   }
 
@@ -23,8 +56,9 @@ resource "aws_api_gateway_deployment" "portal" {
   depends_on = [
     module.members_GET,
     module.members_id_GET,
-    module.members_id_DELETE
-    # module.members_id_photo
+    module.members_id_DELETE,
+    module.members_id_PUT,
+    module.members_id_photo_GET
   ]
 }
 

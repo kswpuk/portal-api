@@ -84,6 +84,41 @@ resource "aws_api_gateway_integration_response" "response200" {
   ]
 }
 
+resource "aws_api_gateway_method_response" "response404" {
+  rest_api_id   = data.aws_api_gateway_rest_api.api.id
+  resource_id   = data.aws_api_gateway_resource.resource.id
+
+  http_method = aws_api_gateway_method.method.http_method
+  status_code = "404"
+
+  response_parameters = {
+    # CORS
+    "method.response.header.Access-Control-Allow-Headers" = true,
+    "method.response.header.Access-Control-Allow-Methods" = true,
+    "method.response.header.Access-Control-Allow-Origin" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "response4xx" {
+  rest_api_id   = data.aws_api_gateway_rest_api.api.id
+  resource_id   = data.aws_api_gateway_resource.resource.id
+
+  http_method = aws_api_gateway_method.method.http_method
+  status_code = aws_api_gateway_method_response.response404.status_code
+  selection_pattern = "4\\d{2}"
+
+  response_parameters = {
+    # CORS - Restrict this?
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,HEAD,POST,PUT,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.integration
+  ]
+}
+
 resource "aws_iam_role" "role" {
   name = "${var.prefix}-${var.name}-${var.http_method}-role"
   assume_role_policy = data.aws_iam_policy_document.agw_assume_role_policy.json

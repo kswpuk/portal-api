@@ -4,6 +4,7 @@ import logging
 import os
 import phonenumbers
 import re
+import time
 from ukpostcodeutils import validation
 from validate_email import validate_email
 
@@ -115,7 +116,7 @@ def handler(event, context):
   response = table.update_item(Key = { "membershipNumber": membershipNumber },
     ConditionExpression = "membershipNumber = :membershipNumber",
     ReturnValues = "UPDATED_NEW",
-    UpdateExpression = "SET firstName = :firstName, surname = :surname, preferredName = :preferredName, medicalInformation = :medicalInformation, dietaryRequirements = :dietaryRequirements, email = :email, telephone = :telephone, address = :address, postcode = :postcode, emergencyContactName = :emergencyContactName, emergencyContactTelephone = :emergencyContactTelephone",
+    UpdateExpression = "SET firstName = :firstName, surname = :surname, preferredName = :preferredName, medicalInformation = :medicalInformation, dietaryRequirements = :dietaryRequirements, email = :email, telephone = :telephone, address = :address, postcode = :postcode, emergencyContactName = :emergencyContactName, emergencyContactTelephone = :emergencyContactTelephone, lastUpdated = :lastUpdated",
     ExpressionAttributeValues = {
       ":membershipNumber": membershipNumber,
       ":firstName": firstName,
@@ -128,7 +129,8 @@ def handler(event, context):
       ":address": address,
       ":postcode": postcode[:-3] + " " + postcode[-3:],
       ":emergencyContactName": emergencyContactName,
-      ":emergencyContactTelephone": phonenumbers.format_number(emergencyContactTelephone, phonenumbers.PhoneNumberFormat.E164)
+      ":emergencyContactTelephone": phonenumbers.format_number(emergencyContactTelephone, phonenumbers.PhoneNumberFormat.E164),
+      ":lastUpdated": int(time.time())
     }
   )
 
