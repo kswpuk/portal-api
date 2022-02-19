@@ -45,7 +45,11 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.members_id_GET),
       jsonencode(module.members_id_DELETE),
       jsonencode(module.members_id_PUT),
-      jsonencode(module.members_id_photo_GET)
+      jsonencode(module.members_id_photo_GET),
+
+      jsonencode(module.applications_GET),
+      jsonencode(module.applications_id_GET),
+      jsonencode(module.applications_id_references_GET)
     ]))
   }
 
