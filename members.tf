@@ -116,7 +116,75 @@ resource "aws_cloudwatch_event_target" "expire_membership" {
     arn = module.expire_membership.lambda_function_arn
 }
 
-# TODO: Lambda - Delete Inactive Members
+# Lambda - Delete Inactive Members
+
+module "delete_accounts" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  source_path = [
+    {
+      path = "${path.module}/lambda/cron/delete_accounts"
+      pip_requirements = false
+    }
+  ]
+
+  function_name = "${var.prefix}-delete_accounts-lambda"
+  description = "Delete inactive accounts"
+  handler = "index.handler"
+  runtime = "python3.9"
+
+  attach_cloudwatch_logs_policy = true
+
+  attach_policy_statements = true
+  policy_statements = {
+    dynamodb = {
+      actions = [
+        "dynamodb:Query",
+        "dynamodb:DeleteItem"
+      ]
+      resources = [ 
+        aws_dynamodb_table.members_table.arn,
+        "${aws_dynamodb_table.members_table.arn}/index/*"
+      ]
+    }
+
+    ses = {
+      actions = [
+        "ses:SendTemplatedEmail"
+      ]
+      resources = [
+        aws_ses_template.account_deleted.arn,
+        aws_ses_template.account_deleted_soon.arn,
+        data.aws_ses_domain_identity.qswp.arn
+      ]
+    }
+  }
+
+  role_name = "${var.prefix}-delete_accounts-role"
+
+  publish = true
+  allowed_triggers = {
+    eventbridge = {
+      principal  = "events.amazonaws.com"
+      source_arn = aws_cloudwatch_event_rule.daily_0700.arn
+    }
+  }
+
+  timeout = 300
+  memory_size = 512
+
+  environment_variables = {
+    TABLE_NAME = aws_dynamodb_table.members_table.name,
+    STATUS_INDEX_NAME = "${var.prefix}-membership_status",
+    DELETED_SOON_TEMPLATE = aws_ses_template.account_deleted_soon.name,
+    ACCOUNT_DELETED_TEMPLATE = aws_ses_template.account_deleted.name
+  }
+}
+
+resource "aws_cloudwatch_event_target" "delete_accounts" {
+    rule = aws_cloudwatch_event_rule.daily_0700.name
+    arn = module.delete_accounts.lambda_function_arn
+}
 
 # SES Templates
 
@@ -124,14 +192,26 @@ data "aws_ses_domain_identity" "qswp" {
   domain = "qswp.org.uk"
 }
 
+resource "aws_ses_template" "membership_expires_soon" {
+  name    = "${var.prefix}-membership_expires_soon"
+  subject = "Your QSWP membership will expire soon"
+  html    = file("${path.module}/emails/membership_expires_soon.html")
+}
+
 resource "aws_ses_template" "membership_expired" {
   name    = "${var.prefix}-membership_expired"
-  subject = "QSWP Membership Expired"
+  subject = "Your QSWP membership has expired"
   html    = file("${path.module}/emails/membership_expired.html")
 }
 
-resource "aws_ses_template" "membership_expires_soon" {
-  name    = "${var.prefix}-membership_expires_soon"
-  subject = "QSWP Membership Expires Soon"
-  html    = file("${path.module}/emails/membership_expires_soon.html")
+resource "aws_ses_template" "account_deleted_soon" {
+  name    = "${var.prefix}-account_deleted_soon"
+  subject = "Your QSWP account will be deleted soon"
+  html    = file("${path.module}/emails/account_deleted_soon.html")
+}
+
+resource "aws_ses_template" "account_deleted" {
+  name    = "${var.prefix}-account_deleted"
+  subject = "Your QSWP account has been deleted"
+  html    = file("${path.module}/emails/account_deleted.html")
 }

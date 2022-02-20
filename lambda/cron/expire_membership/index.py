@@ -42,6 +42,8 @@ def handler(event, context):
   except Exception as e:
     logger.error(f"Unable to get list of members who will expire soon: {str(e)}")
     expireSoonMembers = {'Items':[]}
+
+  logger.info(f"{len(expireSoonMembers['Items'])} members found who expire on {expiresSoonDate} and will be sent a reminder")
   
   for expireSoonMember in expireSoonMembers['Items']:   
     # Send e-mail to members who will expire soon
@@ -83,6 +85,9 @@ def handler(event, context):
   except Exception as e:
     logger.error(f"Unable to get list of expired members: {str(e)}")
     expiredActiveMembers = {'Items':[]}
+  
+  logger.info(f"{len(expiredActiveMembers['Items'])} members found who expired before {currDate.isoformat()} and will be set to INACTIVE")
+
 
   for expiredActiveMember in expiredActiveMembers['Items']:
     logger.info(f"Member {expiredActiveMember['membershipNumber']} ({expiredActiveMember['firstName']} {expiredActiveMember['surname']}) expired on {expiredActiveMember['membershipExpires']}")
