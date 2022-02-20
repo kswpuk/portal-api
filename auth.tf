@@ -37,6 +37,11 @@ resource "aws_cognito_user_pool" "portal" {
 
   admin_create_user_config {
     allow_admin_create_user_only = true
+    invite_message_template {
+      email_subject = "Welcome to the QSWP Portal"
+      email_message = "An account has been created for you on the QSWP Portal, which can be accessed at https://portal.qswp.org.uk. Your username is {username}, and your temporary password is {####}"
+      sms_message = "Your QSWP Portal username is {username}, and your temporary password is {####}"
+    }
   }
 
   mfa_configuration = "OPTIONAL"
@@ -52,6 +57,8 @@ resource "aws_cognito_user_pool" "portal" {
     require_numbers = false
     require_symbols = false
   }
+
+  # TODO: Set up the e-mail so that it comes a QSWP address. Cognito requires SES configured in eu-west-1 to do this, not eu-west-2 as we currently use
 }
 
 resource "aws_cognito_user_pool_client" "portal" {

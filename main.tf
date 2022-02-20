@@ -49,3 +49,9 @@ resource "aws_cloudwatch_event_rule" "daily_0700" {
     description = "Fires daily at 0700"
     schedule_expression = "cron(0 7 * * ? *)"
 }
+
+# Data
+
+data "aws_ses_domain_identity" "qswp" {
+  domain = "qswp.org.uk"
+}

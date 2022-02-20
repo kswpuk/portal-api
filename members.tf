@@ -191,10 +191,6 @@ resource "aws_cloudwatch_event_target" "delete_accounts" {
 
 # SES Templates
 
-data "aws_ses_domain_identity" "qswp" {
-  domain = "qswp.org.uk"
-}
-
 resource "aws_ses_template" "membership_expires_soon" {
   name    = "${var.prefix}-membership_expires_soon"
   subject = "Your QSWP membership will expire soon"
@@ -254,6 +250,8 @@ module "sync_members" {
 
     cognito = {
       actions = [
+        "cognito-idp:AdminCreateUser",
+        "cognito-idp:AdminDeleteUser",
         "cognito-idp:AdminUpdateUserAttributes"
       ]
       resources = [

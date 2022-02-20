@@ -23,13 +23,36 @@ def handler(event, context):
     logger.info(f"{record['eventName']} event for {membershipNumber}")
 
     if record['eventName'] == "INSERT":
-      logger.debug("TODO: Create user in Cognito")
-      # TODO: Create user in Cognito
+      create_user(membershipNumber, record['dynamodb']['NewImage'])
     elif record['eventName'] == "MODIFY":
       update_user(membershipNumber, record['dynamodb']['NewImage'], record['dynamodb']['OldImage'])
     elif record['eventName'] == "REMOVE":
-      logger.debug("TODO: Delete user in Cognito")
-      # TODO: Remove user from Cognito
+      delete_user(membershipNumber)
+
+def create_user(membershipNumber, newImage):
+  userAttributes = []
+
+  if 'email' in newImage and 'S' in newImage['email']:
+    userAttributes.append({
+      'Name': 'email',
+      'Value': newImage['email']['S']
+    })
+  
+  if 'telephone' in newImage and 'S' in newImage['telephone']:
+    userAttributes.append({
+      'Name': 'phone_number',
+      'Value': newImage['telephone']['S']
+    })
+
+  try:
+    cognito.admin_create_user(
+      UserPoolId=USER_POOL,
+      Username=membershipNumber,
+      UserAttributes=userAttributes,
+      DesiredDeliveryMediums=["EMAIL"]
+    )
+  except Exception as e:
+    logger.error(f"Unable to create user {membershipNumber} in Cognito: {str(e)}")
 
 def update_user(membershipNumber, newImage, oldImage):
   changes = []
@@ -67,4 +90,15 @@ def update_user(membershipNumber, newImage, oldImage):
 
     logger.info(f"Cognito profile for {membershipNumber} updated. {'; '.join(logMessage)}")
   except Exception as e:
-    logger.error(f"Unable to update e-mail address in Cognito: {str(e)}")
+    logger.error(f"Unable to update details for user {membershipNumber} in Cognito: {str(e)}")
+
+def delete_user(membershipNumber):
+  try:
+    cognito.admin_delete_user(
+      UserPoolId=USER_POOL,
+      Username=membershipNumber
+    )
+
+    logger.info(f"User {membershipNumber} deleted from Cognito")
+  except Exception as e:
+    logger.error(f"Unable to delete user {membershipNumber} from Cognito: {str(e)}")
