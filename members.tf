@@ -25,6 +25,9 @@ resource "aws_dynamodb_table" "members_table" {
     range_key          = "membershipExpires"
     projection_type    = "ALL"
   }
+
+  stream_enabled = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 }
 
 # S3 Bucket
@@ -214,4 +217,65 @@ resource "aws_ses_template" "account_deleted" {
   name    = "${var.prefix}-account_deleted"
   subject = "Your QSWP account has been deleted"
   html    = file("${path.module}/emails/account_deleted.html")
+}
+
+# Lambda - Sync changes to Cognito
+
+module "sync_members" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  source_path = [
+    {
+      path = "${path.module}/lambda/sync/members"
+      pip_requirements = false
+    }
+  ]
+
+  function_name = "${var.prefix}-sync_members-lambda"
+  description = "Sync members DynamoDB table to Cognito"
+  handler = "index.handler"
+  runtime = "python3.9"
+
+  attach_cloudwatch_logs_policy = true
+
+  attach_policy_statements = true
+  policy_statements = {
+    dynamodb = {
+      actions = [
+        "dynamodb:DescribeStream",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:ListStreams"
+      ]
+      resources = [ 
+        "${aws_dynamodb_table.members_table.arn}/stream/*"
+      ]
+    }
+
+    cognito = {
+      actions = [
+        "cognito-idp:AdminUpdateUserAttributes"
+      ]
+      resources = [
+        aws_cognito_user_pool.portal.arn
+      ]
+    }
+  }
+
+  role_name = "${var.prefix}-sync_members-role"
+
+  publish = true
+
+  timeout = 300
+  memory_size = 512
+
+  environment_variables = {
+    USER_POOL = aws_cognito_user_pool.portal.id
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "sync_members" {
+  event_source_arn  = aws_dynamodb_table.members_table.stream_arn
+  function_name     = module.sync_members.lambda_function_arn
+  starting_position = "LATEST"
 }
