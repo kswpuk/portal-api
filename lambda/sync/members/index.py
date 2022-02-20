@@ -7,7 +7,9 @@ logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 USER_POOL = os.getenv('USER_POOL')
+GROUP = os.getenv('GROUP')
 logger.info(f"Cognito User Pool ID: {USER_POOL}")
+logger.info(f"Default User Group: {GROUP}")
 
 cognito = boto3.client('cognito-idp')
 
@@ -53,6 +55,16 @@ def create_user(membershipNumber, newImage):
     )
   except Exception as e:
     logger.error(f"Unable to create user {membershipNumber} in Cognito: {str(e)}")
+  
+  # Add to STANDARD group
+  try:
+    cognito.admin_add_user_to_group(
+      UserPoolId=USER_POOL,
+      Username=membershipNumber,
+      GroupName=GROUP
+    )
+  except Exception as e:
+    logger.error(f"Unable to add user {membershipNumber} to group {GROUP}: {str(e)}")
 
 def update_user(membershipNumber, newImage, oldImage):
   changes = []

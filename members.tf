@@ -269,6 +269,7 @@ module "sync_members" {
 
   environment_variables = {
     USER_POOL = aws_cognito_user_pool.portal.id
+    GROUP = aws_cognito_user_group.standard.name
   }
 }
 
