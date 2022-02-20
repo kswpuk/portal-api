@@ -41,3 +41,11 @@ END
 ]
 END
 }
+
+# Cron Timings
+
+resource "aws_cloudwatch_event_rule" "daily_0700" {
+    name = "${var.prefix}-daily_0700"
+    description = "Fires daily at 0700"
+    schedule_expression = "cron(0 7 * * ? *)"
+}
