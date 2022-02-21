@@ -250,6 +250,7 @@ module "sync_members" {
 
     cognito = {
       actions = [
+        "cognito-idp:AdminAddUserToGroup",
         "cognito-idp:AdminCreateUser",
         "cognito-idp:AdminDeleteUser",
         "cognito-idp:AdminUpdateUserAttributes"

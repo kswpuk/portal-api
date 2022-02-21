@@ -86,7 +86,7 @@ def handler(event, context):
     logger.error(f"Unable to get list of expired members: {str(e)}")
     expiredActiveMembers = {'Items':[]}
   
-  logger.info(f"{len(expiredActiveMembers['Items'])} members found who expired before {currDate.isoformat()} and will be set to INACTIVE")
+  logger.info(f"{len(expiredActiveMembers['Items'])} members found who expired before {currDate} and will be set to INACTIVE")
 
 
   for expiredActiveMember in expiredActiveMembers['Items']:
