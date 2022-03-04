@@ -146,6 +146,34 @@ module "applications_id_POST" {
   }
 }
 
+
+# /applications/{id}/evidence
+
+module "applications_id_evidence" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.applications_id.resource_id
+  path_part   = "evidence"
+}
+
+module "applications_id_evidence_GET" {
+  source = "./api_method_s3"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.applications_id_evidence.resource_path
+
+  http_method = "GET"
+
+  prefix = var.prefix
+  name = "applications_id_evidence"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  s3_bucket = aws_s3_bucket.applications_evidence_bucket.id
+  s3_suffix = ".jpg"
+}
+
 # /applications/{id}/head
 module "applications_id_head" {
   source = "./api_resource"
@@ -221,7 +249,8 @@ module "applications_id_references_GET" {
     ":v": {
       "S": "$util.escapeJavaScript($input.params("id"))"
     }
-  }
+  },
+  "ProjectionExpression": "referenceName,referenceEmail,relationship,howLong,submittedAt,accepted"
 }
 END
 
@@ -291,29 +320,95 @@ module "applications_id_references_POST" {
   }
 }
 
-# /applications/{id}/evidence
+# /applications/{id}/references/{email}
 
-module "applications_id_evidence" {
+module "applications_id_references_email" {
   source = "./api_resource"
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
-  parent_id   = module.applications_id.resource_id
-  path_part   = "evidence"
+  parent_id   = module.applications_id_references.resource_id
+  path_part   = "{email}"
 }
 
-module "applications_id_evidence_GET" {
-  source = "./api_method_s3"
+module "applications_id_references_email_GET" {
+  source = "./api_method_dynamodb"
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_evidence.resource_path
+  path = module.applications_id_references_email.resource_path
 
-  http_method = "GET"
+  http_method   = "GET"
 
   prefix = var.prefix
-  name = "applications_id_evidence"
+  name = "applications_id_references_email"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  s3_bucket = aws_s3_bucket.applications_evidence_bucket.id
-  s3_suffix = ".jpg"
+  dynamodb_action = "Query"
+  dynamodb_table_arn = aws_dynamodb_table.references_table.arn
+
+  
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.references_table.name}",
+  "KeyConditionExpression": "membershipNumber = :v and referenceEmail =:e",
+  "ExpressionAttributeValues": {
+    ":v": {
+      "S": "$util.escapeJavaScript($input.params("id"))"
+    },
+    ":e": {
+      "S": "$util.escapeJavaScript($input.params("email"))"
+    }
+  }
+}
+END
+
+  response_template = local.dynamodb_to_item_vtl
+}
+
+# /applications/{id}/references/{email}/accept
+
+module "applications_id_references_email_accept" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.applications_id_references_email.resource_id
+  path_part   = "accept"
+}
+
+module "applications_id_references_email_accept_PATCH" {
+  source = "./api_method_dynamodb"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.applications_id_references_email_accept.resource_path
+
+  http_method   = "PATCH"
+
+  prefix = var.prefix
+  name = "applications_id_references_email_accept"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action = "UpdateItem"
+  dynamodb_table_arn = aws_dynamodb_table.references_table.arn
+
+  
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.references_table.name}",
+  "Key": {
+    "membershipNumber": {
+      "S": "$util.escapeJavaScript($input.params("id"))"
+    },
+    "referenceEmail": {
+      "S": "$util.escapeJavaScript($input.params("email"))"
+    }
+  },
+  "UpdateExpression": "SET accepted = :v",
+  "ExpressionAttributeValues": {
+    ":v": {
+      "BOOL": #if( $input.json('$.accepted') == false ) false #else true #end
+    }
+  }
+}
+END
 }

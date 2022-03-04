@@ -11,5 +11,5 @@ module "cors" {
   api      = var.rest_api_id
   resource = aws_api_gateway_resource.res.id
 
-  methods = ["GET", "HEAD", "POST", "PUT"]
+  methods = ["GET", "HEAD", "POST", "PUT", "PATCH"]
 }

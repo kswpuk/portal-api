@@ -108,6 +108,9 @@ def handler(event, context):
   notConsidered = str(reference.get("notConsidered")).strip()
   if notConsidered != "no" and howLong != "yes":
     validationErrors.append("Not Considered is not an expected value")
+  else:
+    # Convert to a boolean
+    notConsidered = (notConsidered == "yes")
 
   statementOfSupport = str(reference.get("statementOfSupport")).strip()
   if not statementOfSupport:
@@ -181,7 +184,7 @@ def handler(event, context):
       "respectForOthers": respectForOthers,
       "submittedAt": int(time.time())
     },
-    ConditionExpression = "attribute_not_exists(relationship)",   # If this already exists, then we've already received a reference from this e-mail for this person
+    ConditionExpression = "attribute_not_exists(submittedAt)",   # If this already exists, then we've already received a reference from this e-mail for this person
     ReturnValues = "NONE"
   )
 

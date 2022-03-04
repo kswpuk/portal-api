@@ -54,7 +54,9 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.applications_id_evidence_GET),
       jsonencode(module.applications_id_head_GET),
       jsonencode(module.applications_id_references_GET),
-      jsonencode(module.applications_id_references_POST)
+      jsonencode(module.applications_id_references_POST),
+      jsonencode(module.applications_id_references_email_GET),
+      jsonencode(module.applications_id_references_email_accept_PATCH)
     ]))
   }
 
@@ -75,7 +77,9 @@ resource "aws_api_gateway_deployment" "portal" {
     module.applications_id_evidence_GET,
     module.applications_id_head_GET,
     module.applications_id_references_GET,
-    module.applications_id_references_POST
+    module.applications_id_references_POST,
+    module.applications_id_references_email_GET,
+    module.applications_id_references_email_accept_PATCH
   ]
 }
 
