@@ -32,7 +32,7 @@ EOF
 resource "aws_api_gateway_rest_api" "portal" {
   name = "${var.prefix}-api"
   description = "REST API for QSWP Portal"
-  binary_media_types = ["image/*"]
+  binary_media_types = ["image/*", "multipart/form-data"]
 }
 
 resource "aws_api_gateway_deployment" "portal" {
@@ -46,10 +46,15 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.members_id_DELETE),
       jsonencode(module.members_id_PUT),
       jsonencode(module.members_id_photo_GET),
+      jsonencode(module.members_id_photo_PUT),
 
       jsonencode(module.applications_GET),
       jsonencode(module.applications_id_GET),
-      jsonencode(module.applications_id_references_GET)
+      jsonencode(module.applications_id_POST),
+      jsonencode(module.applications_id_evidence_GET),
+      jsonencode(module.applications_id_head_GET),
+      jsonencode(module.applications_id_references_GET),
+      jsonencode(module.applications_id_references_POST)
     ]))
   }
 
@@ -62,7 +67,15 @@ resource "aws_api_gateway_deployment" "portal" {
     module.members_id_GET,
     module.members_id_DELETE,
     module.members_id_PUT,
-    module.members_id_photo_GET
+    module.members_id_photo_GET,
+    module.members_id_photo_PUT,
+    module.applications_GET,
+    module.applications_id_GET,
+    module.applications_id_POST,
+    module.applications_id_evidence_GET,
+    module.applications_id_head_GET,
+    module.applications_id_references_GET,
+    module.applications_id_references_POST
   ]
 }
 

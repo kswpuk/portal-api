@@ -43,21 +43,21 @@ def handler(event, context):
   validationErrors = []
 
   firstName = str(member.get("firstName")).strip()
-  if firstName.isspace():
+  if not firstName:
     validationErrors.append("First name cannot be empty")
   
   surname = str(member.get("surname")).strip()
-  if surname.isspace():
+  if not surname:
     validationErrors.append("Surname cannot be empty")
 
   email = str(member.get("email")).strip()
-  if email.isspace():
+  if not email:
     validationErrors.append("E-mail address cannot be empty")
   elif not validate_email(email, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
     validationErrors.append("E-mail address is not valid, or the domain has been blacklisted")
 
   tel = str(member.get("telephone")).strip()
-  if tel.isspace():
+  if not tel:
     validationErrors.append("Telephone number cannot be empty")
   else:
     try:
@@ -69,21 +69,21 @@ def handler(event, context):
       validationErrors.append("Telephone number is not valid")
 
   address = str(member.get("address")).strip()
-  if address.isspace():
+  if not address:
     validationErrors.append("Address cannot be empty")
   
   postcode = re.sub("\s+", "", str(member.get("postcode")).upper())
-  if postcode.isspace():
+  if not postcode:
     validationErrors.append("Postcode cannot be empty")
   elif not validation.is_valid_postcode(postcode):
     validationErrors.append("Postcode is not valid")
 
   emergencyContactName = str(member.get("emergencyContactName")).strip()
-  if emergencyContactName.isspace():
+  if not emergencyContactName:
     validationErrors.append("Emergency contact name cannot be empty")
 
   emergencyContactTel = str(member.get("emergencyContactTelephone")).strip()
-  if emergencyContactTel.isspace():
+  if not emergencyContactTel:
     validationErrors.append("Emergency contact telephone number cannot be empty")
   else:
     try:

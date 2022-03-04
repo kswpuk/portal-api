@@ -160,3 +160,31 @@ module "members_id_photo_GET" {
   s3_bucket = aws_s3_bucket.member_photos_bucket.id
   s3_suffix = ".jpg"
 }
+
+module "members_id_photo_PUT" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_id_photo.resource_path
+
+  http_method   = "PUT"
+
+  prefix = var.prefix
+  name = "members_id_photo"
+  description = "Update Photo"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/members/{id}/photo/PUT"
+
+  lambda_policy = {
+    s3 = {
+      actions = [ "s3:PutObject", "s3:DeleteObject" ]
+      resources = [ "${aws_s3_bucket.member_photos_bucket.arn}/*.jpg" ]
+    }
+  }
+  
+  lambda_env = {
+    PHOTO_BUCKET_NAME = aws_s3_bucket.member_photos_bucket.id
+  }
+}

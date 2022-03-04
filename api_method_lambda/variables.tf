@@ -57,6 +57,6 @@ variable "lambda_env" {
 }
 
 variable "lambda_policy" {
-  type = map
+  type = any
   default = {}
 }

@@ -9,7 +9,8 @@
         "arn:aws:execute-api:*:*:*/*/DELETE/members/*",
         "arn:aws:execute-api:*:*:*/*/GET/applications",
         "arn:aws:execute-api:*:*:*/*/GET/applications/*",
-        "arn:aws:execute-api:*:*:*/*/GET/applications/*/references"
+        "arn:aws:execute-api:*:*:*/*/GET/applications/*/references",
+        "arn:aws:execute-api:*:*:*/*/GET/applications/*/evidence"
       ]
     }
   ]
