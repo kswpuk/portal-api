@@ -1,3 +1,4 @@
+from email.mime import application
 import boto3
 import json
 import logging
@@ -8,10 +9,14 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 USER_POOL = os.getenv('USER_POOL')
 GROUP = os.getenv('GROUP')
-logger.info(f"Cognito User Pool ID: {USER_POOL}")
-logger.info(f"Default User Group: {GROUP}")
+APPLICATION_ACCEPTED_TEMPLATE = os.getenv('APPLICATION_ACCEPTED_TEMPLATE')
+
+logger.info(f"USER_POOL = {USER_POOL}")
+logger.info(f"GROUP = {GROUP}")
+logger.info(f"APPLICATION_ACCEPTED_TEMPLATE = {APPLICATION_ACCEPTED_TEMPLATE}")
 
 cognito = boto3.client('cognito-idp')
+ses = boto3.client('ses')
 
 def handler(event, context):
   logger.debug(event)
@@ -25,11 +30,34 @@ def handler(event, context):
     logger.info(f"{record['eventName']} event for {membershipNumber}")
 
     if record['eventName'] == "INSERT":
+      send_welcome_email(membershipNumber, record['dynamodb']['NewImage'])
       create_user(membershipNumber, record['dynamodb']['NewImage'])
     elif record['eventName'] == "MODIFY":
       update_user(membershipNumber, record['dynamodb']['NewImage'], record['dynamodb']['OldImage'])
     elif record['eventName'] == "REMOVE":
       delete_user(membershipNumber)
+
+def send_welcome_email(membershipNumber, newImage):
+  try:
+    ses.send_templated_email(
+      Source='"QSWP Portal" <portal@qswp.org.uk>',
+      Destination={
+        'ToAddresses': [
+          '"'+newImage['firstName']['S']+' '+newImage['surname']['S']+'" <'+newImage['email']['S']+'>',
+        ]
+      },
+      ReplyToAddresses=[
+          '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+      ],
+      ReturnPath='bounces@qswp.org.uk',
+      Template=APPLICATION_ACCEPTED_TEMPLATE,
+      TemplateData=json.dumps({
+        'firstName': newImage['firstName']['S']
+      })
+    )
+  except Exception as e:
+    logger.error(f"Unable to send {APPLICATION_ACCEPTED_TEMPLATE} e-mail to {membershipNumber} ({newImage['email']['S']}): {str(e)}")
+
 
 def create_user(membershipNumber, newImage):
   userAttributes = []

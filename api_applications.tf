@@ -146,6 +146,56 @@ module "applications_id_POST" {
   }
 }
 
+# /applications/{id}/approve
+
+module "applications_id_approve" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.applications_id.resource_id
+  path_part   = "approve"
+}
+
+module "applications_id_approve_POST" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.applications_id_approve.resource_path
+
+  http_method   = "POST"
+
+  prefix = var.prefix
+  name = "applications_id_approve"
+  description = "Approve Application"
+
+  lambda_path = "${path.module}/lambda/api/applications/{id}/approve/POST"
+
+  lambda_policy = {
+    dynamodb_members = {
+      actions = [
+        "dynamodb:PutItem"
+      ]
+      resources = [ 
+        aws_dynamodb_table.members_table.arn
+      ]
+    }
+
+    dynamodb_applications = {
+      actions = [
+        "dynamodb:GetItem",
+        "dynamodb:DeleteItem"
+      ]
+      resources = [
+        aws_dynamodb_table.applications_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    APPLICATIONS_TABLE_NAME = aws_dynamodb_table.applications_table.id
+    MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.id
+  }
+}
 
 # /applications/{id}/evidence
 

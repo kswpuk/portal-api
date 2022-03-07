@@ -191,6 +191,12 @@ resource "aws_cloudwatch_event_target" "delete_accounts" {
 
 # SES Templates
 
+resource "aws_ses_template" "application_accepted" {
+  name    = "${var.prefix}-application_accepted"
+  subject = "Your QSWP application has been accepted"
+  html    = file("${path.module}/emails/application_accepted.html")
+}
+
 resource "aws_ses_template" "membership_expires_soon" {
   name    = "${var.prefix}-membership_expires_soon"
   subject = "Your QSWP membership will expire soon"
@@ -215,7 +221,7 @@ resource "aws_ses_template" "account_deleted" {
   html    = file("${path.module}/emails/account_deleted.html")
 }
 
-# Lambda - Sync changes to Cognito
+# Lambda - Sync changes to Cognito and send Welcome e-mail
 
 module "sync_members" {
   source = "terraform-aws-modules/lambda/aws"
@@ -259,6 +265,16 @@ module "sync_members" {
         aws_cognito_user_pool.portal.arn
       ]
     }
+
+    ses = {
+      actions = [
+        "ses:SendTemplatedEmail"
+      ]
+      resources = [
+        aws_ses_template.application_accepted.arn,
+        data.aws_ses_domain_identity.qswp.arn
+      ]
+    }
   }
 
   role_name = "${var.prefix}-sync_members-role"
@@ -271,6 +287,7 @@ module "sync_members" {
   environment_variables = {
     USER_POOL = aws_cognito_user_pool.portal.id
     GROUP = aws_cognito_user_group.standard.name
+    APPLICATION_ACCEPTED_TEMPLATE = aws_ses_template.application_accepted.name
   }
 }
 
