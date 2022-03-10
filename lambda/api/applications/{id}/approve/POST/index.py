@@ -66,7 +66,7 @@ def handler(event, context):
         "address": application["address"],
         "postcode": application["postcode"],
         "lastUpdated": application["submittedAt"],
-        "status": "FRIEND",
+        "status": "INACTIVE",
         "joinDate": date.today().isoformat()
       }
     )

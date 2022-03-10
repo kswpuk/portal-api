@@ -9,7 +9,7 @@ logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 PHOTO_BUCKET_NAME = os.getenv('PHOTO_BUCKET_NAME')
-logger.info(f"S3 Photo Bucket Name: {PHOTO_BUCKET_NAME}")
+logger.info(f"PHOTO_BUCKET_NAME = {PHOTO_BUCKET_NAME}")
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",

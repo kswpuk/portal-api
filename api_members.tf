@@ -134,6 +134,51 @@ module "members_id_PUT" {
   }
 }
 
+# /members/{id}/payment
+
+module "members_id_payment" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members_id.resource_id
+  path_part   = "payment"
+}
+
+module "members_id_payment_POST" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_id_payment.resource_path
+
+  http_method   = "POST"
+
+  prefix = var.prefix
+  name = "members_id_payment"
+  description = "Pay membership"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/members/{id}/payment/POST"
+
+  lambda_policy = {
+    dynamodb = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ aws_dynamodb_table.members_table.arn ]
+    }
+
+    secrets = {
+      actions = [ "secretsmanager:GetSecretValue" ]
+      resources = [ aws_secretsmanager_secret.stripe.arn ]
+    }
+  }
+  
+  lambda_env = {
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.id
+    STRIPE_SECRET_NAME = aws_secretsmanager_secret.stripe.arn
+    # We have to build this manually to avoid a dependency cycle
+    SUCCESS_URL = "https://${aws_api_gateway_rest_api.portal.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.prefix}/payments/membership/{CHECKOUT_SESSION_ID}"
+  }
+}
 # /members/{id}/photo
 
 module "members_id_photo" {

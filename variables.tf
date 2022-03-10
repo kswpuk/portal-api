@@ -5,3 +5,7 @@ variable "default_tags" {
 variable "prefix" {
   type = string
 }
+
+variable "stripe_api_key" {
+  type = string
+}

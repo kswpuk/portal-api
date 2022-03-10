@@ -45,6 +45,7 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.members_id_GET),
       jsonencode(module.members_id_DELETE),
       jsonencode(module.members_id_PUT),
+      jsonencode(module.members_id_payment_POST),
       jsonencode(module.members_id_photo_GET),
       jsonencode(module.members_id_photo_PUT),
 
@@ -57,7 +58,9 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.applications_id_references_GET),
       jsonencode(module.applications_id_references_POST),
       jsonencode(module.applications_id_references_email_GET),
-      jsonencode(module.applications_id_references_email_accept_PATCH)
+      jsonencode(module.applications_id_references_email_accept_PATCH),
+
+      jsonencode(module.payments_membership_session_GET)
     ]))
   }
 
@@ -70,8 +73,10 @@ resource "aws_api_gateway_deployment" "portal" {
     module.members_id_GET,
     module.members_id_DELETE,
     module.members_id_PUT,
+    module.members_id_payment_POST,
     module.members_id_photo_GET,
     module.members_id_photo_PUT,
+
     module.applications_GET,
     module.applications_id_GET,
     module.applications_id_POST,
@@ -81,7 +86,9 @@ resource "aws_api_gateway_deployment" "portal" {
     module.applications_id_references_GET,
     module.applications_id_references_POST,
     module.applications_id_references_email_GET,
-    module.applications_id_references_email_accept_PATCH
+    module.applications_id_references_email_accept_PATCH,
+
+    module.payments_membership_session_GET
   ]
 }
 

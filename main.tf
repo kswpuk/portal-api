@@ -55,3 +55,18 @@ resource "aws_cloudwatch_event_rule" "daily_0700" {
 data "aws_ses_domain_identity" "qswp" {
   domain = "qswp.org.uk"
 }
+
+data "aws_region" "current" {}
+
+
+# Secrets
+
+resource "aws_secretsmanager_secret" "stripe" {
+  name = "${var.prefix}-stripe"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "stripe" {
+  secret_id     = aws_secretsmanager_secret.stripe.id
+  secret_string = var.stripe_api_key
+}
