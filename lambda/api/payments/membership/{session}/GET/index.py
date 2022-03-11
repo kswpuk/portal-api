@@ -1,6 +1,7 @@
 
 import boto3
 import datetime
+import json
 import logging
 import os
 import stripe
@@ -9,11 +10,11 @@ import stripe
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
+API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
-STRIPE_SECRET_NAME = os.getenv('STRIPE_SECRET_NAME')
 
+logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
-logger.info(f"STRIPE_SECRET_NAME = {STRIPE_SECRET_NAME}")
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -29,9 +30,9 @@ members_table = dynamodb.Table(MEMBERS_TABLE)
 
 # Get Stripe
 try:
-  stripe.api_key = secrets.get_secret_value(
-    SecretId=STRIPE_SECRET_NAME
-  )['SecretString']
+  stripe.api_key = json.loads(secrets.get_secret_value(
+    SecretId=API_KEY_SECRET_NAME
+  )['SecretString'])['stripe']
 except Exception as e:
   logger.error(f"Failed to get Stripe secret key from Secrets Manager: {str(e)}")
   stripe.api_key = None
@@ -80,17 +81,22 @@ def handler(event, context):
       "body": "Failed to get current expiry date"
     }
   
+  today = datetime.date.today()
   expiry = datetime.date.fromisoformat(member['membershipExpires'])
-  newExpiry = expiry + datetime.timedelta(days=365)
 
   # Check expiry isn't too far in future to prevent replay attacks
-  if expiry > (datetime.date.today() + datetime.timedelta(days=30)):
+  if expiry > (today + datetime.timedelta(days=30)):
     logger.warn(f"Replay attack detected (current expiry date is more than 30 days in the future) - membership status will not be updated")
     return {
       "statusCode": 400,
       "headers": headers,
       "body": "Replay attack detected (current expiry date is more than 30 days in the future) - membership status will not be updated"
     }
+  
+  if expiry < today:
+    newExpiry = today + datetime.timedelta(days=365)
+  else:
+    newExpiry = expiry + datetime.timedelta(days=365)
 
   logger.info(f"Current expiry date for {session_metadata['membershipNumber']} = {expiry}")
   logger.info(f"New expiry date for {session_metadata['membershipNumber']} = {newExpiry}")

@@ -77,12 +77,12 @@ module "payments_membership_session_GET" {
 
     secrets = {
       actions = [ "secretsmanager:GetSecretValue" ]
-      resources = [ aws_secretsmanager_secret.stripe.arn ]
+      resources = [ aws_secretsmanager_secret.api_keys.arn ]
     }
   }
   
   lambda_env = {
+    API_KEY_SECRET_NAME = aws_secretsmanager_secret.api_keys.arn
     MEMBERS_TABLE = aws_dynamodb_table.members_table.id
-    STRIPE_SECRET_NAME = aws_secretsmanager_secret.stripe.arn
   }
 }

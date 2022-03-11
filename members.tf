@@ -229,12 +229,12 @@ module "sync_members" {
   source_path = [
     {
       path = "${path.module}/lambda/sync/members"
-      pip_requirements = false
+      pip_requirements = true
     }
   ]
 
   function_name = "${var.prefix}-sync_members-lambda"
-  description = "Sync members DynamoDB table to Cognito"
+  description = "Sync members DynamoDB table to Cognito and MailChimp"
   handler = "index.handler"
   runtime = "python3.9"
 
@@ -266,6 +266,11 @@ module "sync_members" {
       ]
     }
 
+    secrets = {
+      actions = [ "secretsmanager:GetSecretValue" ]
+      resources = [ aws_secretsmanager_secret.api_keys.arn ]
+    }
+
     ses = {
       actions = [
         "ses:SendTemplatedEmail"
@@ -285,9 +290,12 @@ module "sync_members" {
   memory_size = 512
 
   environment_variables = {
-    USER_POOL = aws_cognito_user_pool.portal.id
-    GROUP = aws_cognito_user_group.standard.name
+    API_KEY_SECRET_NAME = aws_secretsmanager_secret.api_keys.arn
     APPLICATION_ACCEPTED_TEMPLATE = aws_ses_template.application_accepted.name
+    GROUP = aws_cognito_user_group.standard.name
+    MAILCHIMP_LIST_ID = var.mailchimp_list_id
+    MAILCHIMP_SERVER_PREFIX = var.mailchimp_server_prefix
+    USER_POOL = aws_cognito_user_pool.portal.id
   }
 }
 

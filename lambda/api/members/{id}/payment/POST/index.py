@@ -10,12 +10,12 @@ import stripe
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
+API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
-STRIPE_SECRET_NAME = os.getenv('STRIPE_SECRET_NAME')
 SUCCESS_URL = os.getenv('SUCCESS_URL')
 
+logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
-logger.info(f"STRIPE_SECRET_NAME = {STRIPE_SECRET_NAME}")
 logger.info(f"SUCCESS_URL = {SUCCESS_URL}")
 
 headers = {
@@ -32,9 +32,9 @@ members_table = dynamodb.Table(MEMBERS_TABLE)
 
 # Get Stripe
 try:
-  stripe.api_key = secrets.get_secret_value(
-    SecretId=STRIPE_SECRET_NAME
-  )['SecretString']
+  stripe.api_key = json.loads(secrets.get_secret_value(
+    SecretId=API_KEY_SECRET_NAME
+  )['SecretString'])['stripe']
 except Exception as e:
   logger.error(f"Failed to get Stripe secret key from Secrets Manager: {str(e)}")
   stripe.api_key = None

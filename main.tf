@@ -61,12 +61,16 @@ data "aws_region" "current" {}
 
 # Secrets
 
-resource "aws_secretsmanager_secret" "stripe" {
-  name = "${var.prefix}-stripe"
+resource "aws_secretsmanager_secret" "api_keys" {
+  name = "${var.prefix}-api_keys"
+  description = "API keys for external services used by the Portal"
   recovery_window_in_days = 0
 }
 
-resource "aws_secretsmanager_secret_version" "stripe" {
-  secret_id     = aws_secretsmanager_secret.stripe.id
-  secret_string = var.stripe_api_key
+resource "aws_secretsmanager_secret_version" "api_keys" {
+  secret_id     = aws_secretsmanager_secret.api_keys.id
+  secret_string = jsonencode({
+    mailchimp = var.mailchimp_api_key
+    stripe = var.stripe_api_key
+  })
 }
