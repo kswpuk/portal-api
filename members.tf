@@ -107,10 +107,11 @@ module "expire_membership" {
   memory_size = 512
 
   environment_variables = {
-    TABLE_NAME = aws_dynamodb_table.members_table.name,
-    STATUS_INDEX_NAME = "${var.prefix}-membership_status",
-    EXPIRES_SOON_TEMPLATE = aws_ses_template.membership_expires_soon.name,
+    EXPIRES_SOON_TEMPLATE = aws_ses_template.membership_expires_soon.name
     MEMBERSHIP_EXPIRED_TEMPLATE = aws_ses_template.membership_expired.name
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+    STATUS_INDEX_NAME = "${var.prefix}-membership_status"
+    TABLE_NAME = aws_dynamodb_table.members_table.name
   }
 }
 
@@ -177,10 +178,11 @@ module "delete_accounts" {
   memory_size = 512
 
   environment_variables = {
-    TABLE_NAME = aws_dynamodb_table.members_table.name,
-    STATUS_INDEX_NAME = "${var.prefix}-membership_status",
-    DELETED_SOON_TEMPLATE = aws_ses_template.account_deleted_soon.name,
+    TABLE_NAME = aws_dynamodb_table.members_table.name
+    STATUS_INDEX_NAME = "${var.prefix}-membership_status"
+    DELETED_SOON_TEMPLATE = aws_ses_template.account_deleted_soon.name
     ACCOUNT_DELETED_TEMPLATE = aws_ses_template.account_deleted.name
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
   }
 }
 
@@ -295,6 +297,7 @@ module "sync_members" {
     GROUP = aws_cognito_user_group.standard.name
     MAILCHIMP_LIST_ID = var.mailchimp_list_id
     MAILCHIMP_SERVER_PREFIX = var.mailchimp_server_prefix
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
     USER_POOL = aws_cognito_user_pool.portal.id
   }
 }

@@ -14,3 +14,12 @@ provider "aws" {
     tags = var.default_tags
   }
 }
+
+provider "aws" {
+  alias = "acm_provider"
+  region = "us-east-1"
+
+  default_tags {
+    tags = var.default_tags
+  }
+}

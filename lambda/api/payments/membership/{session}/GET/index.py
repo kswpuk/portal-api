@@ -12,9 +12,11 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
+PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 
 logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
+logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -126,7 +128,7 @@ def handler(event, context):
   logger.info(f"Membership for {session_metadata['membershipNumber']} updated")
 
   redir_headers = headers
-  redir_headers['Location'] = "https://portal.qswp.org.uk/user/pay"
+  redir_headers['Location'] = f"https://{PORTAL_DOMAIN}/user/pay"
 
   return {
     "statusCode": 303,

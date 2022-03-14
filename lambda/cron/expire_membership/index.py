@@ -8,15 +8,17 @@ import os
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
-TABLE_NAME = os.getenv('TABLE_NAME')
-STATUS_INDEX_NAME = os.getenv('STATUS_INDEX_NAME')
 EXPIRES_SOON_TEMPLATE = os.getenv('EXPIRES_SOON_TEMPLATE')
 MEMBERSHIP_EXPIRED_TEMPLATE = os.getenv('MEMBERSHIP_EXPIRED_TEMPLATE')
+PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
+STATUS_INDEX_NAME = os.getenv('STATUS_INDEX_NAME')
+TABLE_NAME = os.getenv('TABLE_NAME')
 
-logger.info(f"DynamoDB Table Name: {TABLE_NAME}")
-logger.info(f"DynamoDB Status Index Name: {STATUS_INDEX_NAME}")
-logger.info(f"Membership Expires Soon Template: {EXPIRES_SOON_TEMPLATE}")
-logger.info(f"Membership Expired Template: {MEMBERSHIP_EXPIRED_TEMPLATE}")
+logger.info(f"EXPIRES_SOON_TEMPLATE = {EXPIRES_SOON_TEMPLATE}")
+logger.info(f"MEMBERSHIP_EXPIRED_TEMPLATE = {MEMBERSHIP_EXPIRED_TEMPLATE}")
+logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
+logger.info(f"STATUS_INDEX_NAME = {STATUS_INDEX_NAME}")
+logger.info(f"TABLE_NAME = {TABLE_NAME}")
 
 dynamodb = boto3.resource('dynamodb')
 ses = boto3.client('ses')
@@ -63,7 +65,8 @@ def handler(event, context):
         Template=EXPIRES_SOON_TEMPLATE,
         TemplateData=json.dumps({
           'name': name,
-          'expiryDate': expiresSoonDate
+          'expiryDate': expiresSoonDate,
+          'portalDomain': PORTAL_DOMAIN
         })
       )
 
@@ -127,7 +130,8 @@ def handler(event, context):
         ReturnPath='bounces@qswp.org.uk',
         Template=MEMBERSHIP_EXPIRED_TEMPLATE,
         TemplateData=json.dumps({
-          'name': name
+          'name': name,
+          'portalDomain': PORTAL_DOMAIN
         })
       )
 

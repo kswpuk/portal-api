@@ -8,17 +8,20 @@ import os
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
-TABLE_NAME = os.getenv('TABLE_NAME')
-STATUS_INDEX_NAME = os.getenv('STATUS_INDEX_NAME')
-DELETED_SOON_TEMPLATE = os.getenv('DELETED_SOON_TEMPLATE')
 ACCOUNT_DELETED_TEMPLATE = os.getenv('ACCOUNT_DELETED_TEMPLATE')
+DELETED_SOON_TEMPLATE = os.getenv('DELETED_SOON_TEMPLATE')
+PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
+STATUS_INDEX_NAME = os.getenv('STATUS_INDEX_NAME')
+TABLE_NAME = os.getenv('TABLE_NAME')
 
 GRACE_PERIOD_DAYS = 730 # 2 years
 
-logger.info(f"DynamoDB Table Name: {TABLE_NAME}")
-logger.info(f"DynamoDB Status Index Name: {STATUS_INDEX_NAME}")
-logger.info(f"Account Deleted Soon Template: {DELETED_SOON_TEMPLATE}")
-logger.info(f"Account Deleted Template: {ACCOUNT_DELETED_TEMPLATE}")
+logger.info(f"ACCOUNT_DELETED_TEMPLATE = {ACCOUNT_DELETED_TEMPLATE}")
+logger.info(f"DELETED_SOON_TEMPLATE = {DELETED_SOON_TEMPLATE}")
+logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
+logger.info(f"STATUS_INDEX_NAME = {STATUS_INDEX_NAME}")
+logger.info(f"TABLE_NAME = {TABLE_NAME}")
+
 
 dynamodb = boto3.resource('dynamodb')
 ses = boto3.client('ses')
@@ -156,7 +159,8 @@ def reminders(expiredDate, table):
         Template=DELETED_SOON_TEMPLATE,
         TemplateData=json.dumps({
           'name': name,
-          'deletionDate': (expiredDate + datetime.timedelta(days=GRACE_PERIOD_DAYS)).isoformat()
+          'deletionDate': (expiredDate + datetime.timedelta(days=GRACE_PERIOD_DAYS)).isoformat(),
+          'portalDomain': PORTAL_DOMAIN
         })
       )
 

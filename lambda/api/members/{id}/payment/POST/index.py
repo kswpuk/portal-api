@@ -12,10 +12,12 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
+PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 SUCCESS_URL = os.getenv('SUCCESS_URL')
 
 logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
+logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"SUCCESS_URL = {SUCCESS_URL}")
 
 headers = {
@@ -90,7 +92,7 @@ def handler(event, context):
       }],
       mode='payment',
       success_url=SUCCESS_URL,
-      cancel_url='https://portal.qswp.org.uk/user/pay',
+      cancel_url=f"https://{PORTAL_DOMAIN}/user/pay",
       metadata={
         'membershipNumber': membershipNumber,
         'memberName': f"{member['firstName']} {member['surname']}"

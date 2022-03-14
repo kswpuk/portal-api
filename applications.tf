@@ -144,6 +144,7 @@ module "sync_applications" {
   environment_variables = {
     APPLICATION_RECEIVED_TEMPLATE = aws_ses_template.application_received.name
     EVIDENCE_BUCKET_NAME = aws_s3_bucket.applications_evidence_bucket.id
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
     REFERENCES_TABLE = aws_dynamodb_table.references_table.name
   }
 }
@@ -224,6 +225,7 @@ module "sync_references" {
 
   environment_variables = {
     APPLICATION_TABLE = aws_dynamodb_table.applications_table.name
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
     REFERENCE_REQUEST_TEMPLATE = aws_ses_template.reference_request.name
     REFERENCE_RECEIVED_TEMPLATE = aws_ses_template.reference_received.name
   }

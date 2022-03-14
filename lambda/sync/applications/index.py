@@ -9,10 +9,12 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 APPLICATION_RECEIVED_TEMPLATE = os.getenv('APPLICATION_RECEIVED_TEMPLATE')
 EVIDENCE_BUCKET_NAME = os.getenv('EVIDENCE_BUCKET_NAME')
+PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 REFERENCES_TABLE = os.getenv('REFERENCES_TABLE')
 
 logger.info(f"APPLICATION_RECEIVED_TEMPLATE = {APPLICATION_RECEIVED_TEMPLATE}")
 logger.info(f"EVIDENCE_BUCKET_NAME = {EVIDENCE_BUCKET_NAME}")
+logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"REFERENCES_TABLE = {REFERENCES_TABLE}")
 
 dynamodb = boto3.resource('dynamodb')
@@ -65,7 +67,8 @@ def application_received(application):
       Template=APPLICATION_RECEIVED_TEMPLATE,
       TemplateData=json.dumps({
         'name': name,
-        'membershipNumber': membershipNumber
+        'membershipNumber': membershipNumber,
+        'portalDomain': PORTAL_DOMAIN
       })
     )
   except Exception as e:

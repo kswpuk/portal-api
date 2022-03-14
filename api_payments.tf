@@ -84,5 +84,6 @@ module "payments_membership_session_GET" {
   lambda_env = {
     API_KEY_SECRET_NAME = aws_secretsmanager_secret.api_keys.arn
     MEMBERS_TABLE = aws_dynamodb_table.members_table.id
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
   }
 }

@@ -21,3 +21,8 @@ variable "mailchimp_server_prefix" {
 variable "stripe_api_key" {
   type = string
 }
+
+variable "domain" {
+  type = string
+  default = "qswp.org.uk"
+}

@@ -39,7 +39,7 @@ resource "aws_cognito_user_pool" "portal" {
     allow_admin_create_user_only = true
     invite_message_template {
       email_subject = "Welcome to the QSWP Portal"
-      email_message = "An account has been created for you on the QSWP Portal, which can be accessed at https://portal.qswp.org.uk. Your username is {username}, and your temporary password is {####}"
+      email_message = "An account has been created for you on the QSWP Portal, which can be accessed at https://${aws_route53_record.portal.fqdn}. Your username is {username}, and your temporary password is {####}"
       sms_message = "Your QSWP Portal username is {username}, and your temporary password is {####}"
     }
   }
