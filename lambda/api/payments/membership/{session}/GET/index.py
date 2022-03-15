@@ -20,7 +20,7 @@ logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-  "Access-Control-Allow-Methods": "OPTIONS,PUT",
+  "Access-Control-Allow-Methods": "OPTIONS,GET",
   "Access-Control-Allow-Origin": "*"
 }
 
