@@ -61,6 +61,9 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.applications_id_references_email_accept_PATCH),
 
       jsonencode(module.events_GET),
+      jsonencode(module.events_eventSeriesId_eventId_GET),
+      jsonencode(module.events_eventSeriesId_eventId_allocate_id_PUT),
+      jsonencode(module.events_eventSeriesId_eventId_register_id_POST),
 
       jsonencode(module.payments_membership_session_GET)
     ]))
@@ -91,6 +94,9 @@ resource "aws_api_gateway_deployment" "portal" {
     module.applications_id_references_email_accept_PATCH,
 
     module.events_GET,
+    module.events_eventSeriesId_eventId_GET,
+    module.events_eventSeriesId_eventId_allocate_id_PUT,
+    module.events_eventSeriesId_eventId_register_id_POST,
 
     module.payments_membership_session_GET
   ]

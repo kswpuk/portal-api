@@ -71,18 +71,37 @@ def handler(event, context):
         "headers": headers,
         "body": "Unable to resize uploaded photo"
       }
+  
+  # Create thumbnail for avatars
+  logger.debug(f"Resizing photo for {membershipNumber} to create thumbnail")
+  try:
+    thumbnail = ImageOps.contain(photo, (128, 128))
+  except Exception as e:
+    logger.warning(f"Unable to resize photo for thumbnail: {str(e)}")
+    return {
+      "statusCode": 500,
+      "headers": headers,
+      "body": "Unable to create thumbnail"
+    }
 
-  # Upload evidence to S3 as JPEG
+  # Upload photo to S3 as JPEG
   logger.debug(f"Uploading photo as JPEG to S3 bucket for {membershipNumber}")
 
-  try:
-    photo_b = io.BytesIO()
-    photo.save(photo_b, "JPEG")
-    photo_b.seek(0)
+  photo_b = io.BytesIO()
+  photo.save(photo_b, "JPEG")
+  photo_b.seek(0)
 
-    photo_bucket.upload_fileobj(photo_b, membershipNumber + ".jpg", ExtraArgs={'ContentType': 'image/jpeg'})
-  except Exception as e:
-    logger.error(f"Failed to upload photo to S3: {str(e)}")
+  upload_image(membershipNumber + ".jpg", photo_b)
+
+  # Upload thumbnail to S3 as JPEG
+  logger.debug(f"Uploading thumbnail as JPEG to S3 bucket for {membershipNumber}")
+
+  thumbnail_b = io.BytesIO()
+  thumbnail.save(thumbnail_b, "JPEG")
+  thumbnail_b.seek(0)
+
+  upload_image(membershipNumber + ".thumb.jpg", thumbnail_b)
+
 
   logger.info(f"Photo updated for {membershipNumber}")
 
@@ -90,3 +109,10 @@ def handler(event, context):
     "statusCode": 200,
     "headers": headers
   }
+
+def upload_image(filename, bytes):
+  try:
+    photo_bucket.upload_fileobj(bytes, filename, ExtraArgs={'ContentType': 'image/jpeg'})
+  except Exception as e:
+    logger.error(f"Failed to upload photo {filename} to S3: {str(e)}")
+    raise e

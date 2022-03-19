@@ -1,0 +1,13 @@
+{
+  "Statement": [
+    {
+      "Sid": "rest",
+      "Action": "execute-api:Invoke",
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:execute-api:*:*:*/*/PUT/events/*/*/allocate/{membershipNumber}",
+        "arn:aws:execute-api:*:*:*/*/DELETE/events/*/*/allocate/{membershipNumber}"
+      ]
+    }
+  ]
+}

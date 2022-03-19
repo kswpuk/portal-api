@@ -67,6 +67,11 @@ def handler(event, context):
         event_series = event_series_table.get_item(
           Key={
             "eventSeriesId": instance['eventSeriesId']
+          },
+          ProjectionExpression="eventSeriesId,#n,description,#t",
+          ExpressionAttributeNames={
+            "#n": "name",
+            "#t": "type"
           }
         )
 
@@ -100,12 +105,7 @@ def handler(event, context):
       except Exception as e:
         logger.error(f"Unable to get event allocation information from {EVENT_ALLOCATIONS_TABLE} for combinedEventId {combinedEventId} for member {membershipNumber}: {str(e)}")
     
-    start_date = datetime.datetime.fromisoformat(instance['startDate'])
-    end_date = datetime.datetime.fromisoformat(instance['endDate'])
-
     additional = {
-      "live": start_date < now and end_date > now,
-      "past": end_date < now,
       "allocation": allocation.get('allocation'),
       "combinedEventId": combinedEventId
     }
@@ -129,6 +129,7 @@ def scan_events(**kwargs):
     if last_evaluated_key:
       response = event_instance_table.scan(
         ExclusiveStartKey=last_evaluated_key,
+        ProjectionExpression="eventSeriesId,eventId,endDate,location,locationType,postcode,startDate",
         **kwargs
       )
     else: 

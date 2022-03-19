@@ -18,7 +18,7 @@ module "events_GET" {
 
   prefix = var.prefix
   name = "events"
-  description = "List Events"
+  description = "List events"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
@@ -33,7 +33,6 @@ module "events_GET" {
       resources = [
         aws_dynamodb_table.event_series_table.arn,
         aws_dynamodb_table.event_instance_table.arn,
-        "${aws_dynamodb_table.event_instance_table.arn}/index/*",
         aws_dynamodb_table.event_allocation_table.arn
       ]
     }
@@ -43,5 +42,219 @@ module "events_GET" {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
+  }
+}
+
+# /events/{eventSeriesId}
+
+module "events_eventSeriesId" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events.resource_id
+  path_part   = "{eventSeriesId}"
+}
+
+# /events/{eventSeriesId}/{eventId}
+
+module "events_eventSeriesId_eventId" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_eventSeriesId.resource_id
+  path_part   = "{eventId}"
+}
+
+module "events_eventSeriesId_eventId_GET" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_eventSeriesId_eventId.resource_path
+
+  http_method   = "GET"
+
+  prefix = var.prefix
+  name = "events_eventSeriesId_eventId"
+  description = "Get event"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/GET"
+
+  lambda_policy = {
+    dynamodb_get = {
+      actions = [ 
+        "dynamodb:GetItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_series_table.arn,
+        aws_dynamodb_table.event_instance_table.arn,
+        aws_dynamodb_table.members_table.arn
+      ]
+    }
+
+    dynamodb_query = {
+      actions = [ 
+        "dynamodb:Query"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.id
+  }
+}
+
+# /events/{eventSeriesId}/{eventId}/allocate
+
+module "events_eventSeriesId_eventId_allocate" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_eventSeriesId_eventId.resource_id
+  path_part   = "allocate"
+}
+
+# /events/{eventSeriesId}/{eventId}/allocate/{id}
+
+module "events_eventSeriesId_eventId_allocate_id" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_eventSeriesId_eventId_allocate.resource_id
+  path_part   = "{id}"
+}
+
+module "events_eventSeriesId_eventId_allocate_id_PUT" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_eventSeriesId_eventId_allocate_id.resource_path
+
+  http_method   = "PUT"
+
+  prefix = var.prefix
+  name = "events_eventSeriesId_eventId_alloc_id"
+  description = "Allocate member to event"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/allocate/{id}/PUT"
+
+  lambda_policy = {
+    dynamodb_allocation = {
+      actions = [ 
+        "dynamodb:UpdateItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+  }
+}
+
+module "events_eventSeriesId_eventId_allocate_id_DELETE" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_eventSeriesId_eventId_allocate_id.resource_path
+
+  http_method   = "DELETE"
+
+  prefix = var.prefix
+  name = "events_eventSeriesId_eventId_alloc_id"
+  description = "Delete allocation"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/allocate/{id}/DELETE"
+
+  lambda_policy = {
+    dynamodb_allocation = {
+      actions = [ 
+        "dynamodb:DeleteItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+  }
+}
+
+# /events/{eventSeriesId}/{eventId}/register
+
+module "events_eventSeriesId_eventId_register" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_eventSeriesId_eventId.resource_id
+  path_part   = "register"
+}
+
+# /events/{eventSeriesId}/{eventId}/register/{id}
+
+module "events_eventSeriesId_eventId_register_id" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_eventSeriesId_eventId_register.resource_id
+  path_part   = "{id}"
+}
+
+module "events_eventSeriesId_eventId_register_id_POST" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_eventSeriesId_eventId_register_id.resource_path
+
+  http_method   = "POST"
+
+  prefix = var.prefix
+  name = "events_eventSeriesId_eventId_register_id"
+  description = "Register for event"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/register/{id}/POST"
+
+  lambda_policy = {
+    dynamodb_event = {
+      actions = [ 
+        "dynamodb:GetItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn
+      ]
+    }
+
+    dynamodb_allocation = {
+      actions = [ 
+        "dynamodb:GetItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
   }
 }
