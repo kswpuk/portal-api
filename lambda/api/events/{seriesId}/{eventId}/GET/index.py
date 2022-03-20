@@ -9,11 +9,13 @@ import os
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
+ELIGIBILITY_ARN = os.getenv('ELIGIBILITY_ARN')
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
 EVENT_INSTANCE_TABLE = os.getenv('EVENT_INSTANCE_TABLE')
 EVENT_SERIES_TABLE = os.getenv('EVENT_SERIES_TABLE')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
 
+logger.info(f"ELIGIBILITY_ARN = {ELIGIBILITY_ARN}")
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_INSTANCE_TABLE = {EVENT_INSTANCE_TABLE}")
 logger.info(f"EVENT_SERIES_TABLE = {EVENT_SERIES_TABLE}")
@@ -27,6 +29,7 @@ headers = {
 
 # Set up AWS
 dynamodb = boto3.resource('dynamodb')
+lambda_client = boto3.client('lambda')
 
 event_allocations_table = dynamodb.Table(EVENT_ALLOCATIONS_TABLE)
 event_series_table = dynamodb.Table(EVENT_SERIES_TABLE)
@@ -34,8 +37,10 @@ event_instance_table = dynamodb.Table(EVENT_INSTANCE_TABLE)
 members_table = dynamodb.Table(MEMBERS_TABLE)
 
 def handler(event, context):
-  event_series_id = event['pathParameters']['eventSeriesId']
+  event_series_id = event['pathParameters']['seriesId']
   event_id = event['pathParameters']['eventId']
+
+  membership_number = event['requestContext']['authorizer']['membershipNumber']
   
   try:
     event_series = event_series_table.get_item(
@@ -84,7 +89,20 @@ def handler(event, context):
       "allocation": allocation['allocation'],
     } | member)
   
-  combined = instance | event_series | {"allocations": enh_allocations}
+  try:
+    eligible = json.loads(lambda_client.invoke(
+      FunctionName=ELIGIBILITY_ARN,
+      Payload=json.dumps({
+        "eventSeriesId": event_series_id,
+        "eventId": event_id,
+        "membershipNumber": membership_number
+      })
+    )['Payload'].read())
+  except Exception as e:
+    logger.error(f"Unable to confirm event {event_series_id}/{event_id} eligibility for {membership_number}: {str(e)}")
+    raise e
+
+  combined = instance | event_series | {"allocations": enh_allocations} | {"eligibility": eligible}
 
   return {
     "statusCode": 200,

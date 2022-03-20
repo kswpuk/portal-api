@@ -42,6 +42,14 @@ def handler(event, context):
       ]
     })
 
+    photo_bucket.delete_objects(Delete={
+      'Objects': [
+        {
+          'Key': membershipNumber + ".thumb.jpg"
+        }
+      ]
+    })
+
     return {
       "statusCode": 200,
       "headers": headers

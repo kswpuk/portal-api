@@ -45,41 +45,41 @@ module "events_GET" {
   }
 }
 
-# /events/{eventSeriesId}
+# /events/{seriesId}
 
-module "events_eventSeriesId" {
+module "events_seriesId" {
   source = "./api_resource"
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events.resource_id
-  path_part   = "{eventSeriesId}"
+  path_part   = "{seriesId}"
 }
 
-# /events/{eventSeriesId}/{eventId}
+# /events/{seriesId}/{eventId}
 
-module "events_eventSeriesId_eventId" {
+module "events_seriesId_eventId" {
   source = "./api_resource"
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
-  parent_id   = module.events_eventSeriesId.resource_id
+  parent_id   = module.events_seriesId.resource_id
   path_part   = "{eventId}"
 }
 
-module "events_eventSeriesId_eventId_GET" {
+module "events_seriesId_eventId_GET" {
   source = "./api_method_lambda"
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.events_eventSeriesId_eventId.resource_path
+  path = module.events_seriesId_eventId.resource_path
 
   http_method   = "GET"
 
   prefix = var.prefix
-  name = "events_eventSeriesId_eventId"
+  name = "events_seriesId_eventId"
   description = "Get event"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/GET"
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/GET"
 
   lambda_policy = {
     dynamodb_get = {
@@ -101,9 +101,19 @@ module "events_eventSeriesId_eventId_GET" {
         aws_dynamodb_table.event_allocation_table.arn
       ]
     }
+
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_events_eligible.lambda_function_arn
+      ]
+    }
   }
   
   lambda_env = {
+    ELIGIBILITY_ARN = module.utils_events_eligible.lambda_function_arn
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
@@ -111,41 +121,32 @@ module "events_eventSeriesId_eventId_GET" {
   }
 }
 
-# /events/{eventSeriesId}/{eventId}/allocate
+# /events/{seriesId}/{eventId}/allocate
 
-module "events_eventSeriesId_eventId_allocate" {
+module "events_seriesId_eventId_allocate" {
   source = "./api_resource"
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
-  parent_id   = module.events_eventSeriesId_eventId.resource_id
+  parent_id   = module.events_seriesId_eventId.resource_id
   path_part   = "allocate"
 }
 
-# /events/{eventSeriesId}/{eventId}/allocate/{id}
 
-module "events_eventSeriesId_eventId_allocate_id" {
-  source = "./api_resource"
-
-  rest_api_id = aws_api_gateway_rest_api.portal.id
-  parent_id   = module.events_eventSeriesId_eventId_allocate.resource_id
-  path_part   = "{id}"
-}
-
-module "events_eventSeriesId_eventId_allocate_id_PUT" {
+module "events_seriesId_eventId_allocate_PUT" {
   source = "./api_method_lambda"
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.events_eventSeriesId_eventId_allocate_id.resource_path
+  path = module.events_seriesId_eventId_allocate.resource_path
 
   http_method   = "PUT"
 
   prefix = var.prefix
-  name = "events_eventSeriesId_eventId_alloc_id"
+  name = "events_seriesId_eventId_allocate"
   description = "Allocate member to event"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/allocate/{id}/PUT"
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/allocate/PUT"
 
   lambda_policy = {
     dynamodb_allocation = {
@@ -163,21 +164,31 @@ module "events_eventSeriesId_eventId_allocate_id_PUT" {
   }
 }
 
-module "events_eventSeriesId_eventId_allocate_id_DELETE" {
+# /events/{seriesId}/{eventId}/allocate/{id}
+
+module "events_seriesId_eventId_allocate_id" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_seriesId_eventId_allocate.resource_id
+  path_part   = "{id}"
+}
+
+module "events_seriesId_eventId_allocate_id_DELETE" {
   source = "./api_method_lambda"
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.events_eventSeriesId_eventId_allocate_id.resource_path
+  path = module.events_seriesId_eventId_allocate_id.resource_path
 
   http_method   = "DELETE"
 
   prefix = var.prefix
-  name = "events_eventSeriesId_eventId_alloc_id"
+  name = "events_seriesId_eventId_allocate_id"
   description = "Delete allocation"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/allocate/{id}/DELETE"
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/allocate/{id}/DELETE"
 
   lambda_policy = {
     dynamodb_allocation = {
@@ -195,41 +206,41 @@ module "events_eventSeriesId_eventId_allocate_id_DELETE" {
   }
 }
 
-# /events/{eventSeriesId}/{eventId}/register
+# /events/{seriesId}/{eventId}/register
 
-module "events_eventSeriesId_eventId_register" {
+module "events_seriesId_eventId_register" {
   source = "./api_resource"
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
-  parent_id   = module.events_eventSeriesId_eventId.resource_id
+  parent_id   = module.events_seriesId_eventId.resource_id
   path_part   = "register"
 }
 
-# /events/{eventSeriesId}/{eventId}/register/{id}
+# /events/{seriesId}/{eventId}/register/{id}
 
-module "events_eventSeriesId_eventId_register_id" {
+module "events_seriesId_eventId_register_id" {
   source = "./api_resource"
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
-  parent_id   = module.events_eventSeriesId_eventId_register.resource_id
+  parent_id   = module.events_seriesId_eventId_register.resource_id
   path_part   = "{id}"
 }
 
-module "events_eventSeriesId_eventId_register_id_POST" {
+module "events_seriesId_eventId_register_id_POST" {
   source = "./api_method_lambda"
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.events_eventSeriesId_eventId_register_id.resource_path
+  path = module.events_seriesId_eventId_register_id.resource_path
 
   http_method   = "POST"
 
   prefix = var.prefix
-  name = "events_eventSeriesId_eventId_register_id"
+  name = "events_seriesId_eventId_register_id"
   description = "Register for event"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  lambda_path = "${path.module}/lambda/api/events/{eventSeriesId}/{eventId}/register/{id}/POST"
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/register/{id}/POST"
 
   lambda_policy = {
     dynamodb_event = {

@@ -28,7 +28,7 @@ event_allocations_table = dynamodb.Table(EVENT_ALLOCATIONS_TABLE)
 event_instance_table = dynamodb.Table(EVENT_INSTANCE_TABLE)
 
 def handler(event, context):
-  event_series_id = event['pathParameters']['eventSeriesId']
+  event_series_id = event['pathParameters']['seriesId']
   event_id = event['pathParameters']['eventId']
   membership_number = event['pathParameters']['id']
 
