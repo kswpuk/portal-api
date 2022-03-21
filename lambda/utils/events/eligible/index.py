@@ -53,9 +53,9 @@ def handler(event, context):
     if r == "active":
       rules.append(wrangle(r, evaluate_active(member)))
     elif r == "under25":
-      rules.append(wrangle(r, evaluate_under25(member, event)))
+      rules.append(wrangle(r, evaluate_under25(member, instance)))
     elif r == "over25":
-      rules.append(wrangle(r, evaluate_under25(member, event)))
+      rules.append(wrangle(r, evaluate_over25(member, instance)))
     else:
       logger.warn(f"Unexpected rule {r} - rule will be ignored")
 
