@@ -112,7 +112,7 @@ def handler(event, context):
 
     results.append(instance | event_series | additional)
 
-  results = sorted(results, key=lambda d: (d['startDate'], d['name']), reverse=True) 
+  results = sorted(results, key=lambda d: (d['startDate'], d['name']), reverse=all) 
 
   return {
     "statusCode": 200,

@@ -9,9 +9,11 @@ import os
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
+ELIGIBILITY_ARN = os.getenv('ELIGIBILITY_ARN')
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
 EVENT_INSTANCE_TABLE = os.getenv('EVENT_INSTANCE_TABLE')
 
+logger.info(f"ELIGIBILITY_ARN = {ELIGIBILITY_ARN}")
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_INSTANCE_TABLE = {EVENT_INSTANCE_TABLE}")
 
@@ -23,6 +25,7 @@ headers = {
 
 # Set up AWS
 dynamodb = boto3.resource('dynamodb')
+lambda_client = boto3.client('lambda')
 
 event_allocations_table = dynamodb.Table(EVENT_ALLOCATIONS_TABLE)
 event_instance_table = dynamodb.Table(EVENT_INSTANCE_TABLE)
@@ -57,11 +60,8 @@ def handler(event, context):
         "message": "Registration deadline has already passed"
       })
     }
-  
-  # TODO: Check applicant meets criteria
 
   # Check current allocation status is either none or REGISTERED
-  
   try:
     current_allocation = event_allocations_table.get_item(
       Key={
@@ -95,6 +95,29 @@ def handler(event, context):
     }
     
   elif current_status == "UNREGISTERED":
+    # Check applicant meets eligibility criteria
+    try:
+      eligible = json.loads(lambda_client.invoke(
+        FunctionName=ELIGIBILITY_ARN,
+        Payload=json.dumps({
+          "eventSeriesId": event_series_id,
+          "eventId": event_id,
+          "membershipNumber": membership_number
+        })
+      )['Payload'].read())
+    except Exception as e:
+      logger.error(f"Unable to confirm event {event_series_id}/{event_id} eligibility for {membership_number}: {str(e)}")
+      raise e
+
+    if not eligible.get("eligible"):
+      return {
+        "statusCode": 422,
+        "headers": headers,
+        "body": json.dumps({
+          "message": "Eligibility criteria not met"
+        })
+      }
+
     # Register
     try:
       new_allocation = event_allocations_table.update_item(

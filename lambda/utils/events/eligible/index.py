@@ -90,4 +90,4 @@ def evaluate_over25(member, event):
   event = datetime.date.fromisoformat(event.get("startDate")[0:10])
   cutoff = datetime.date(event.year - 25, event.month, event.day)
 
-  return birthday >= cutoff
+  return birthday < cutoff

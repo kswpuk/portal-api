@@ -262,9 +262,19 @@ module "events_seriesId_eventId_register_id_POST" {
         aws_dynamodb_table.event_allocation_table.arn
       ]
     }
+
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_events_eligible.lambda_function_arn
+      ]
+    }
   }
   
   lambda_env = {
+    ELIGIBILITY_ARN = module.utils_events_eligible.lambda_function_arn
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
   }
