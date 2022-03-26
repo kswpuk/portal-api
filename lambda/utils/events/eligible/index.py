@@ -1,5 +1,4 @@
 
-from cmath import exp
 import boto3
 import datetime
 import logging

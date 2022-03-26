@@ -100,7 +100,7 @@ def handler(event, context):
     validationErrors.append("Membership number must be a number")
 
   firstName = str(application.get("firstName")).strip()
-  if not firstName:
+  if not firstName: #TODO: firstName will actually be None here if firstName is empty... Use .get("")?
     validationErrors.append("First name cannot be empty")
   
   surname = str(application.get("surname")).strip()

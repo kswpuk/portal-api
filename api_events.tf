@@ -45,6 +45,40 @@ module "events_GET" {
   }
 }
 
+# /events/_series
+module "events_series" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events.resource_id
+  path_part   = "_series"
+}
+
+module "events_series_GET" {
+  source = "./api_method_dynamodb"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_series.resource_path
+
+  http_method   = "GET"
+
+  prefix = var.prefix
+  name = "events_series"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action = "Scan"
+  dynamodb_table_arn = aws_dynamodb_table.event_series_table.arn
+
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.event_series_table.name}"
+}
+END
+
+  response_template = local.dynamodb_to_array_vtl
+}
+
 # /events/{seriesId}
 
 module "events_seriesId" {
@@ -55,6 +89,128 @@ module "events_seriesId" {
   path_part   = "{seriesId}"
 }
 
+module "events_seriesId_GET" {
+  source = "./api_method_dynamodb"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId.resource_path
+
+  http_method   = "GET"
+
+  prefix = var.prefix
+  name = "events_seriesId"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action = "Query"
+  dynamodb_table_arn = aws_dynamodb_table.event_series_table.arn
+
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.event_series_table.name}",
+  "KeyConditionExpression": "eventSeriesId = :v",
+  "ExpressionAttributeValues": {
+    ":v": {
+      "S": "$util.escapeJavaScript($input.params("seriesId"))"
+    }
+  }
+}
+END
+
+  response_template = local.dynamodb_to_item_vtl
+}
+
+module "events_seriesId_DELETE" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId.resource_path
+
+  http_method   = "DELETE"
+
+  prefix = var.prefix
+  name = "events_seriesId"
+  description = "Delete event series"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/DELETE"
+
+  lambda_policy = {
+    dynamodb_get = {
+      actions = [ "dynamodb:Query" ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn,
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+
+    dynamodb_delete = {
+      actions = [ 
+        "dynamodb:DeleteItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_INSTANCE_TABLE_NAME = aws_dynamodb_table.event_instance_table.id
+    EVENT_SERIES_TABLE_NAME = aws_dynamodb_table.event_series_table.id
+  }
+}
+
+module "events_seriesId_POST" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId.resource_path
+
+  http_method   = "POST"
+
+  prefix = var.prefix
+  name = "events_seriesId"
+  description = "Create event series"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/POST"
+
+  lambda_policy = {
+    dynamodb_get = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ aws_dynamodb_table.event_series_table.arn ]
+      condition = {
+        forallvalues_condition = {
+          test = "ForAllValues:StringEquals"
+          variable = "dynamodb:Attributes"
+          values = ["eventSeriesId"]
+        }
+        stringequals_condition = {
+          test = "StringEquals"
+          variable = "dynamodb:Select"
+          values = ["SPECIFIC_ATTRIBUTES"]
+        }
+      }
+    }
+
+
+    dynamodb_put = {
+      actions = [ 
+        "dynamodb:PutItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_SERIES_TABLE_NAME = aws_dynamodb_table.event_series_table.id
+  }
+}
+
 # /events/{seriesId}/{eventId}
 
 module "events_seriesId_eventId" {
@@ -63,6 +219,39 @@ module "events_seriesId_eventId" {
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events_seriesId.resource_id
   path_part   = "{eventId}"
+}
+
+
+module "events_seriesId_eventId_DELETE" {
+  source = "./api_method_dynamodb"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId_eventId.resource_path
+
+  http_method   = "DELETE"
+
+  prefix = var.prefix
+  name = "events_seriesId_eventId"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action = "DeleteItem"
+  dynamodb_table_arn = aws_dynamodb_table.members_table.arn
+
+  
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.members_table.name}",
+  "Key": {
+    "eventSeriesId": {
+      "S": "$util.escapeJavaScript($input.params("seriesId"))"
+    },
+    "eventId": {
+      "S": "$util.escapeJavaScript($input.params("eventId"))"
+    }
+  }
+}
+END 
 }
 
 module "events_seriesId_eventId_GET" {
@@ -118,6 +307,104 @@ module "events_seriesId_eventId_GET" {
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
     MEMBERS_TABLE = aws_dynamodb_table.members_table.id
+  }
+}
+
+module "events_seriesId_eventId_POST" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId_eventId.resource_path
+
+  http_method   = "POST"
+
+  prefix = var.prefix
+  name = "events_seriesId_eventId"
+  description = "Create event"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/POST"
+
+  lambda_policy = {
+    dynamodb_get = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ 
+        aws_dynamodb_table.event_instance_table.arn,
+      ]
+    }
+
+    dynamodb_put = {
+      actions = [ 
+        "dynamodb:PutItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn
+      ]
+    }
+
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_events_validate.lambda_function_arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_INSTANCE_TABLE_NAME = aws_dynamodb_table.event_instance_table.id
+    VALIDATION_ARN = module.utils_events_validate.lambda_function_arn
+  }
+}
+
+module "events_seriesId_eventId_PUT" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId_eventId.resource_path
+
+  http_method   = "PUT"
+
+  prefix = var.prefix
+  name = "events_seriesId_eventId"
+  description = "Create event"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/PUT"
+
+  lambda_policy = {
+    dynamodb_get = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ 
+        aws_dynamodb_table.event_instance_table.arn,
+      ]
+    }
+
+    dynamodb_put = {
+      actions = [ 
+        "dynamodb:UpdateItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn
+      ]
+    }
+
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_events_validate.lambda_function_arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_INSTANCE_TABLE_NAME = aws_dynamodb_table.event_instance_table.id
+    VALIDATION_ARN = module.utils_events_validate.lambda_function_arn
   }
 }
 

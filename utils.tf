@@ -40,3 +40,44 @@ module "utils_events_eligible" {
     MEMBERS_TABLE = aws_dynamodb_table.members_table.name
   }
 }
+
+module "utils_events_validate" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  source_path = [
+    {
+      path = "${path.module}/lambda/utils/events/validate"
+      pip_requirements = false
+    }
+  ]
+
+  function_name = "${var.prefix}-utils_events_validate-lambda"
+  description = "Validate event information"
+  handler = "index.handler"
+  runtime = "python3.9"
+
+  attach_cloudwatch_logs_policy = true
+
+  attach_policy_statements = true
+  policy_statements = {
+    dynamodb = {
+      actions = [
+        "dynamodb:GetItem"
+      ]
+      resources = [ 
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+  }
+
+  role_name = "${var.prefix}-utils_events_validate-role"
+
+  publish = true
+
+  timeout = 30
+  memory_size = 512
+
+  environment_variables = {
+    EVENT_SERIES_TABLE_NAME = aws_dynamodb_table.event_series_table.name
+  }
+}
