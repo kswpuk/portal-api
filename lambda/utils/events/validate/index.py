@@ -133,6 +133,15 @@ def handler(event, context):
     attendanceCriteria = None
     validationErrors.append("Attendance criteria must be a list")
 
+  try:
+    attendanceLimit = int(event.get("attendanceLimit", 0))
+
+    if attendanceLimit < 0:
+      validationErrors.append("Attendance limit cannot be less than 0")
+  except:
+    attendanceLimit = None
+    validationErrors.append("Attendance limit must be numeric")
+
   if len(validationErrors) > 0:
     return {
       "valid": False,
@@ -152,6 +161,7 @@ def handler(event, context):
         "registrationDate": registrationDate,
         "startDate": startDate,
         "endDate": endDate,
-        "attendanceCriteria": attendanceCriteria
+        "attendanceCriteria": attendanceCriteria,
+        "attendanceLimit": attendanceLimit
       }
     }
