@@ -5,6 +5,12 @@
       "Action": "execute-api:Invoke",
       "Effect": "Allow",
       "Resource": [
+        "arn:aws:execute-api:*:*:*/*/POST/events/*",
+        "arn:aws:execute-api:*:*:*/*/PUT/events/*",
+        "arn:aws:execute-api:*:*:*/*/DELETE/events/*",
+        "arn:aws:execute-api:*:*:*/*/POST/events/*/*",
+        "arn:aws:execute-api:*:*:*/*/PUT/events/*/*",
+        "arn:aws:execute-api:*:*:*/*/DELETE/events/*/*",
         "arn:aws:execute-api:*:*:*/*/PUT/events/*/*/allocate",
         "arn:aws:execute-api:*:*:*/*/DELETE/events/*/*/allocate/{membershipNumber}"
       ]

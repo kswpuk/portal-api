@@ -64,12 +64,14 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.events_series_GET),
       jsonencode(module.events_seriesId_GET),
       jsonencode(module.events_seriesId_POST),
+      jsonencode(module.events_seriesId_PUT),
       jsonencode(module.events_seriesId_DELETE),
       jsonencode(module.events_seriesId_eventId_GET),
       jsonencode(module.events_seriesId_eventId_POST),
       jsonencode(module.events_seriesId_eventId_PUT),
       jsonencode(module.events_seriesId_eventId_DELETE),
       jsonencode(module.events_seriesId_eventId_allocate_PUT),
+      jsonencode(module.events_seriesId_eventId_allocate_id_DELETE),
       jsonencode(module.events_seriesId_eventId_register_id_POST),
 
       jsonencode(module.payments_membership_session_GET)
@@ -104,12 +106,14 @@ resource "aws_api_gateway_deployment" "portal" {
     module.events_series_GET,
     module.events_seriesId_GET,
     module.events_seriesId_POST,
+    module.events_seriesId_PUT,
     module.events_seriesId_DELETE,
     module.events_seriesId_eventId_GET,
     module.events_seriesId_eventId_POST,
     module.events_seriesId_eventId_PUT,
     module.events_seriesId_eventId_DELETE,
     module.events_seriesId_eventId_allocate_PUT,
+    module.events_seriesId_eventId_allocate_id_DELETE,
     module.events_seriesId_eventId_register_id_POST,
 
     module.payments_membership_session_GET

@@ -211,6 +211,56 @@ module "events_seriesId_POST" {
   }
 }
 
+module "events_seriesId_PUT" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId.resource_path
+
+  http_method   = "PUT"
+
+  prefix = var.prefix
+  name = "events_seriesId"
+  description = "Update event series"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/PUT"
+
+  lambda_policy = {
+    dynamodb_get = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ aws_dynamodb_table.event_series_table.arn ]
+      condition = {
+        forallvalues_condition = {
+          test = "ForAllValues:StringEquals"
+          variable = "dynamodb:Attributes"
+          values = ["eventSeriesId"]
+        }
+        stringequals_condition = {
+          test = "StringEquals"
+          variable = "dynamodb:Select"
+          values = ["SPECIFIC_ATTRIBUTES"]
+        }
+      }
+    }
+
+
+    dynamodb_update = {
+      actions = [ 
+        "dynamodb:UpdateItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_SERIES_TABLE_NAME = aws_dynamodb_table.event_series_table.id
+  }
+}
+
 # /events/{seriesId}/{eventId}
 
 module "events_seriesId_eventId" {

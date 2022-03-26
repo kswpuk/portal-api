@@ -6,6 +6,9 @@
       "Effect": "Allow",
       "Resource": [
         "arn:aws:execute-api:*:*:*/*/GET/events",
+        "arn:aws:execute-api:*:*:*/*/GET/events/_series",
+        "arn:aws:execute-api:*:*:*/*/GET/events/*",
+        "arn:aws:execute-api:*:*:*/*/GET/events/*/*",
         "arn:aws:execute-api:*:*:*/*/PUT/events/*/*/register/{membershipNumber}",
         "arn:aws:execute-api:*:*:*/*/GET/members",
         "arn:aws:execute-api:*:*:*/*/GET/members/{membershipNumber}",
