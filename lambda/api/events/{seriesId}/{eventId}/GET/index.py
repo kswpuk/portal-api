@@ -102,7 +102,10 @@ def handler(event, context):
     logger.error(f"Unable to confirm event {event_series_id}/{event_id} eligibility for {membership_number}: {str(e)}")
     raise e
 
-  combined = instance | event_series | {"allocations": enh_allocations} | {"eligibility": eligible}
+  combined = instance | event_series | {"allocations": enh_allocations, "eligibility": eligible}
+
+  if combined.get("attendanceLimit") is not None:
+    combined["attendanceLimit"] = int(combined["attendanceLimit"])
 
   return {
     "statusCode": 200,

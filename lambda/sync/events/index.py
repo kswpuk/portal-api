@@ -7,19 +7,24 @@ import os
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
+ALLOCATIONS_TABLE = os.getenv('ALLOCATIONS_TABLE')
 EVENT_ADDED_TEMPLATE = os.getenv('EVENT_ADDED_TEMPLATE')
 EVENT_SERIES_TABLE = os.getenv('EVENT_SERIES_TABLE')
+MEMBERS_STATUS_INDEX = os.getenv('MEMBERS_STATUS_INDEX')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 
+logger.info(f"ALLOCATIONS_TABLE = {ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_ADDED_TEMPLATE = {EVENT_ADDED_TEMPLATE}")
 logger.info(f"EVENT_SERIES_TABLE = {EVENT_SERIES_TABLE}")
+logger.info(f"MEMBERS_STATUS_INDEX = {MEMBERS_STATUS_INDEX}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 
 dynamodb = boto3.resource('dynamodb')
 ses = boto3.client('ses')
 
+allocations_table = dynamodb.Table(ALLOCATIONS_TABLE)
 event_series_table = dynamodb.Table(EVENT_SERIES_TABLE)
 members_table = dynamodb.Table(MEMBERS_TABLE)
 
@@ -38,6 +43,8 @@ def handler(event, context):
     if record['eventName'] == "INSERT":
       e = record['dynamodb']['NewImage']
       new_event(eventSeriesId, e)
+    elif record['eventName'] == "REMOVE":
+      remove_event(eventSeriesId, eventId)
 
 
 def new_event(eventSeriesId, eventInstance):
@@ -54,7 +61,7 @@ def new_event(eventSeriesId, eventInstance):
     logger.error(f"Unable to get event series {eventSeriesId} from {EVENT_SERIES_TABLE}: {str(e)}")
     raise e
 
-  # Get a list of all members
+  # Get a list of all ACTIVE members
   error_count = 0
   success_count = 0
 
@@ -103,19 +110,63 @@ def new_event(eventSeriesId, eventInstance):
   logger.info(f"Finished sending notifications for event {eventSeriesId}/{eventInstance['eventId']} - {success_count} successful, {error_count} errors")
 
 
+def remove_event(eventSeriesId, eventId):
+  combined_event_id = f"{eventSeriesId}/{eventId}"
+  allocations = get_allocations(combined_event_id)
+
+  for allocation in allocations:
+    try:
+      allocations_table.delete_item(
+        Key={
+          "combinedEventId": combined_event_id,
+          "membershipNumber": allocation["membershipNumber"]
+        }
+      )
+    except Exception as e:
+      logger.warn(f"Unable to delete allocation of {allocation['membershipNumber']} for {combinedEventId}: {str(e)}")
+
+
 def get_members():
   results = []
   last_evaluated_key = None
 
   while True:
     if last_evaluated_key:
-      response = members_table.scan(
+      response = members_table.query(
+        IndexName=MEMBERS_STATUS_INDEX,
+        KeyConditionExpression=Key("status").eq("ACTIVE"),
         ExclusiveStartKey=last_evaluated_key,
         ProjectionExpression="firstName,preferredName,surname,email"
       )
     else: 
-      response = members_table.scan(
+      response = members_table.query(
+        IndexName=MEMBERS_STATUS_INDEX,
+        KeyConditionExpression=Key("status").eq("ACTIVE"),
         ProjectionExpression="firstName,preferredName,surname,email"
+      )
+
+    last_evaluated_key = response.get('LastEvaluatedKey')    
+    results.extend(response['Items'])
+        
+    if not last_evaluated_key:
+      break
+
+  return results
+
+
+def get_allocations(combined_event_id):
+  results = []
+  last_evaluated_key = None
+
+  while True:
+    if last_evaluated_key:
+      response = allocations_table.query(
+        KeyConditionExpression=Key("combinedEventId").eq(combined_event_id),
+        ExclusiveStartKey=last_evaluated_key
+      )
+    else: 
+      response = allocations_table.query(
+        KeyConditionExpression=Key("combinedEventId").eq(combined_event_id)
       )
 
     last_evaluated_key = response.get('LastEvaluatedKey')    

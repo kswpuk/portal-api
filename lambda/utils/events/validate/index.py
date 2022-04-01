@@ -35,7 +35,7 @@ def handler(event, context):
         "eventSeriesId"
       ]
     )
-    if 'Item' not in response or 'eventSeriesId' in response['Item']:
+    if 'Item' not in response or 'eventSeriesId' not in response['Item']:
       validationErrors.append(f"Event series {eventSeriesId} does not exist")
 
   except Exception as e:
@@ -113,10 +113,10 @@ def handler(event, context):
       validationErrors.append("Registration date must be a valid date")
       registrationDate = None
     
-  if allowPastDates or (registrationDate and datetime.date.now() > registrationDate):
+  if allowPastDates or (registrationDate and datetime.date.today() > registrationDate):
     validationErrors.append("Registration date can't be in the past")
     
-  if registrationDate and startDate and registrationDate > startDate:
+  if registrationDate and startDate and registrationDate > startDate.date():
     validationErrors.append("Registration date can't be after the start date")
 
   
@@ -158,9 +158,9 @@ def handler(event, context):
         "location": location,
         "postcode": postcode,
         "locationType": locationType,
-        "registrationDate": registrationDate,
-        "startDate": startDate,
-        "endDate": endDate,
+        "registrationDate": registrationDate.isoformat(),
+        "startDate": startDate.isoformat(),
+        "endDate": endDate.isoformat(),
         "attendanceCriteria": attendanceCriteria,
         "attendanceLimit": attendanceLimit
       }

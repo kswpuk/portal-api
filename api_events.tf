@@ -286,12 +286,11 @@ module "events_seriesId_eventId_DELETE" {
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
   dynamodb_action = "DeleteItem"
-  dynamodb_table_arn = aws_dynamodb_table.members_table.arn
-
+  dynamodb_table_arn = aws_dynamodb_table.event_instance_table.arn
   
   request_template = <<END
 {
-  "TableName": "${aws_dynamodb_table.members_table.name}",
+  "TableName": "${aws_dynamodb_table.event_instance_table.name}",
   "Key": {
     "eventSeriesId": {
       "S": "$util.escapeJavaScript($input.params("seriesId"))"

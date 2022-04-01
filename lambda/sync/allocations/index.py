@@ -28,8 +28,17 @@ def handler(event, context):
       logger.warning(f"Non-DynamoDB event found - skipping: {json.dumps(record)}")
       continue
 
+    if record['eventName'] == "REMOVE":
+      logger.info("REMOVE event received - skipping")
+      continue
+
     combinedEventId = record['dynamodb']['Keys']['combinedEventId']['S']
     membershipNumber = record['dynamodb']['Keys']['membershipNumber']['S']
+
+    if 'NewImage' not in record['dynamodb']:
+      logger.warning(f"New image not included in record - skipping: {json.dumps(record)}")
+      continue
+
     allocation = record['dynamodb']['NewImage']['allocation']['S']
 
     logger.info(f"{record['eventName']} event for member {membershipNumber} on {combinedEventId}")

@@ -70,7 +70,7 @@ resource "aws_ses_template" "event_allocation" {
   html    = file("${path.module}/emails/event_allocation.html")
 }
 
-# Lambda - New Event Notification
+# Lambda - New Event Notification, Remove allocations on Deleted Event
 module "sync_events" {
   source = "terraform-aws-modules/lambda/aws"
 
@@ -82,7 +82,7 @@ module "sync_events" {
   ]
 
   function_name = "${var.prefix}-sync_events-lambda"
-  description = "Send out event notifications"
+  description = "Send out event notifications and tidy up after event deletion"
   handler = "index.handler"
   runtime = "python3.9"
 
@@ -102,6 +102,16 @@ module "sync_events" {
       ]
     }
 
+    dynamodb_allocations = {
+      actions = [
+        "dynamodb:Query",
+        "dynamodb:DeleteItem"
+      ]
+      resources = [ 
+        aws_dynamodb_table.event_allocation_table.arn
+      ]
+    }
+
     dynamodb_events = {
       actions = [
         "dynamodb:GetItem"
@@ -113,10 +123,11 @@ module "sync_events" {
 
     dynamodb_members = {
       actions = [
-        "dynamodb:Scan"
+        "dynamodb:Query"
       ]
       resources = [ 
-        aws_dynamodb_table.members_table.arn
+        aws_dynamodb_table.members_table.arn,
+        "${aws_dynamodb_table.members_table.arn}/index/*"
       ]
     }
 
@@ -139,8 +150,10 @@ module "sync_events" {
   memory_size = 512
 
   environment_variables = {
+    ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.name
     EVENT_ADDED_TEMPLATE = aws_ses_template.event_added.name
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
+    MEMBERS_STATUS_INDEX = "${var.prefix}-membership_status"
     MEMBERS_TABLE = aws_dynamodb_table.members_table.name
     PORTAL_DOMAIN = aws_route53_record.portal.fqdn
   }
