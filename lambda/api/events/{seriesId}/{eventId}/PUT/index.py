@@ -29,17 +29,16 @@ def handler(event, context):
   eventId = str(event['pathParameters']['eventId']).strip().lower()
 
   # Check that the instance ID exists
-  logger.debug(f"Checking event instance {eventSeriesId}/{eventId} doesn't already exist")
+  logger.debug(f"Checking event instance {eventSeriesId}/{eventId} exists")
   try:
     response = event_instance_table.get_item(
       Key={
         "eventSeriesId": eventSeriesId,
         "eventId": eventId,
       },
-      AttributesToGet=[
-        "eventSeriesId,eventId"
-      ]
+      ProjectionExpression="eventSeriesId,eventId"
     )
+
     if 'Item' not in response or 'eventId' not in response['Item']:
       return {
         "statusCode": 404,
@@ -91,7 +90,10 @@ def handler(event, context):
         "eventSeriesId": eventSeriesId,
         "eventId": eventId
     },
-    UpdateExpression="SET details=:details, location=:location, postcode=:postcode, locationType=:locationType, registrationDate=:registrationDate, startDate=:startDate, endDate=:endDate, attendanceCriteria=:attendanceCriteria, attendanceLimit=:attendanceLimit",
+    UpdateExpression="SET details=:details, #location=:location, postcode=:postcode, locationType=:locationType, registrationDate=:registrationDate, startDate=:startDate, endDate=:endDate, attendanceCriteria=:attendanceCriteria, attendanceLimit=:attendanceLimit",
+    ExpressionAttributeNames={
+      "#location": "location"
+    },
     ExpressionAttributeValues={
       ":details": validationResult["event"]["details"],
       ":location": validationResult["event"]["location"],

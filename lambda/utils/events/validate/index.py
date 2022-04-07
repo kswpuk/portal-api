@@ -82,7 +82,7 @@ def handler(event, context):
       validationErrors.append("Start date must be a valid date time")
       startDate = None
     
-  if allowPastDates or (startDate and datetime.datetime.now() > startDate):
+  if not allowPastDates and (startDate and datetime.datetime.now() > startDate):
     validationErrors.append("Start date can't be in the past")
   
 
@@ -96,7 +96,7 @@ def handler(event, context):
       validationErrors.append("End date must be a valid date time")
       endDate = None
     
-  if allowPastDates or (endDate and datetime.datetime.now() > endDate):
+  if not allowPastDates and (endDate and datetime.datetime.now() > endDate):
     validationErrors.append("End date can't be in the past")
 
   if startDate and endDate and startDate > endDate:
@@ -113,7 +113,7 @@ def handler(event, context):
       validationErrors.append("Registration date must be a valid date")
       registrationDate = None
     
-  if allowPastDates or (registrationDate and datetime.date.today() > registrationDate):
+  if not allowPastDates and (registrationDate and datetime.date.today() > registrationDate):
     validationErrors.append("Registration date can't be in the past")
     
   if registrationDate and startDate and registrationDate > startDate.date():
