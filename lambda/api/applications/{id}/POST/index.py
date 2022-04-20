@@ -175,6 +175,15 @@ def handler(event, context):
   elif not validate_email(nsrEmail, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
     validationErrors.append("Non-Scout reference e-mail address is not valid, or the domain has been blacklisted")
   
+  if srEmail == email:
+    validationErrors.append("Scout reference cannot use your e-mail address")
+  
+  if nsrEmail == email:
+    validationErrors.append("Non-Scout reference cannot use your e-mail address")
+
+  if srEmail == nsrEmail:
+    validationErrors.append("Scout reference and non-Scout reference cannot use the same e-mail address")
+
   if len(validationErrors) > 0:
     logger.warning(f"{len(validationErrors)} errors found during validation of application for {membershipNumber}: {validationErrors}")
     return {

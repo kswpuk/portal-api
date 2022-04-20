@@ -16,7 +16,7 @@ locals {
 {
 #foreach($key in $item.keySet())
   #foreach($type in $item.get($key).keySet())
-    #set($value = $util.escapeJavaScript($item.get($key).get($type)))
+    #set($value = $util.escapeJavaScript($item.get($key).get($type)).replaceAll("\\'","'"))
     "$key": #if($type == "S")"#end$value#if($type == "S")"#end
   #end
   #if($foreach.hasNext),#end
@@ -30,7 +30,7 @@ END
 #foreach($item in $inputRoot.Items) {
   #foreach($key in $item.keySet())
     #foreach($type in $item.get($key).keySet())
-      #set($value = $util.escapeJavaScript($item.get($key).get($type)))
+      #set($value = $util.escapeJavaScript($item.get($key).get($type)).replaceAll("\\'","'"))
       "$key": #if($type == "S")"#end$value#if($type == "S")"#end
     #end
     #if($foreach.hasNext),#end

@@ -84,18 +84,21 @@ def handler(event, context):
     }
   
   today = datetime.date.today()
-  expiry = datetime.date.fromisoformat(member['membershipExpires'])
+  if 'membershipExpires' in member:
+    expiry = datetime.date.fromisoformat(member['membershipExpires'])
 
-  # Check expiry isn't too far in future to prevent replay attacks
-  if expiry > (today + datetime.timedelta(days=30)):
-    logger.warn(f"Replay attack detected (current expiry date is more than 30 days in the future) - membership status will not be updated")
-    return {
-      "statusCode": 400,
-      "headers": headers,
-      "body": "Replay attack detected (current expiry date is more than 30 days in the future) - membership status will not be updated"
-    }
+    # Check expiry isn't too far in future to prevent replay attacks
+    if expiry > (today + datetime.timedelta(days=30)):
+      logger.warn(f"Replay attack detected (current expiry date is more than 30 days in the future) - membership status will not be updated")
+      return {
+        "statusCode": 400,
+        "headers": headers,
+        "body": "Replay attack detected (current expiry date is more than 30 days in the future) - membership status will not be updated"
+      }
+  else:
+    expiry = None
   
-  if expiry < today:
+  if expiry is None or expiry < today:
     newExpiry = today + datetime.timedelta(days=365)
   else:
     newExpiry = expiry + datetime.timedelta(days=365)

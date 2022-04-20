@@ -105,8 +105,8 @@ def handler(event, context):
   if howLong != "lessThan5" and howLong != "moreThan5":
     validationErrors.append("How Long is not an expected value")
 
-  notConsidered = str(reference.get("notConsidered")).strip()
-  if notConsidered != "no" and howLong != "yes":
+  notConsidered = str(reference.get("notConsidered")).strip().lower()
+  if notConsidered not in ["no", "yes"]:
     validationErrors.append("Not Considered is not an expected value")
   else:
     # Convert to a boolean

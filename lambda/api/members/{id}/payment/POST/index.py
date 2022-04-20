@@ -64,15 +64,16 @@ def handler(event, context):
     }
 
   # Check membership has expired or is due to shortly
-  expiry = datetime.date.fromisoformat(member['membershipExpires'])
+  if 'membershipExpires' in member:
+    expiry = datetime.date.fromisoformat(member['membershipExpires'])
 
-  if expiry > (datetime.date.today() + datetime.timedelta(days=30)):
-    logger.warn(f"Current expiry date is more than 30 days in the future")
-    return {
-      "statusCode": 400,
-      "headers": headers,
-      "body": "Current expiry date is more than 30 days in the future"
-    }
+    if expiry > (datetime.date.today() + datetime.timedelta(days=30)):
+      logger.warn(f"Current expiry date is more than 30 days in the future")
+      return {
+        "statusCode": 400,
+        "headers": headers,
+        "body": "Current expiry date is more than 30 days in the future"
+      }
 
   logger.info(f"Initializing Stripe Checkout session for {membershipNumber}")
   
