@@ -120,7 +120,7 @@ def handler(event, context):
   if registrationDate and startDate and registrationDate > startDate.date():
     validationErrors.append("Registration date can't be after the start date")
 
-  if event.get("eventUrl") is None:
+  if event.get("eventUrl", "") == "":
     eventUrl = None
   else:
     try:
