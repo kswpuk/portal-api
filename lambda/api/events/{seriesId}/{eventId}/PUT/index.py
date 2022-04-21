@@ -90,7 +90,7 @@ def handler(event, context):
         "eventSeriesId": eventSeriesId,
         "eventId": eventId
     },
-    UpdateExpression="SET details=:details, #location=:location, postcode=:postcode, locationType=:locationType, registrationDate=:registrationDate, startDate=:startDate, endDate=:endDate, attendanceCriteria=:attendanceCriteria, attendanceLimit=:attendanceLimit",
+    UpdateExpression="SET details=:details, #location=:location, postcode=:postcode, locationType=:locationType, registrationDate=:registrationDate, startDate=:startDate, endDate=:endDate, eventUrl=:eventUrl, attendanceCriteria=:attendanceCriteria, attendanceLimit=:attendanceLimit",
     ExpressionAttributeNames={
       "#location": "location"
     },
@@ -102,6 +102,7 @@ def handler(event, context):
       ":registrationDate": validationResult["event"]["registrationDate"],
       ":startDate": validationResult["event"]["startDate"],
       ":endDate": validationResult["event"]["endDate"],
+      ":eventUrl": validationResult["event"]["eventUrl"],
       ":attendanceCriteria": validationResult["event"]["attendanceCriteria"],
       ":attendanceLimit": validationResult["event"]["attendanceLimit"],
     },

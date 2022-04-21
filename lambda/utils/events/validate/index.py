@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 import re
+from urllib.parse import urlparse
 
 # Configure logging
 logger = logging.getLogger()
@@ -119,6 +120,17 @@ def handler(event, context):
   if registrationDate and startDate and registrationDate > startDate.date():
     validationErrors.append("Registration date can't be after the start date")
 
+  if event.get("eventUrl") is None:
+    eventUrl = None
+  else:
+    try:
+      result = urlparse(event.get("eventUrl"))
+      if all([result.scheme, result.netloc]):
+        eventUrl = event.get("eventUrl")
+      else:
+        raise
+    except:
+      validationErrors.append("Event URL is not valid")
   
   if event.get("attendanceCriteria") is None:
     attendanceCriteria = []
@@ -161,6 +173,7 @@ def handler(event, context):
         "registrationDate": registrationDate.isoformat(),
         "startDate": startDate.isoformat(),
         "endDate": endDate.isoformat(),
+        "eventUrl": eventUrl,
         "attendanceCriteria": attendanceCriteria,
         "attendanceLimit": attendanceLimit
       }
