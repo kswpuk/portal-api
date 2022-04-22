@@ -253,7 +253,7 @@ module "members_id_photo" {
 }
 
 module "members_id_photo_GET" {
-  source = "./api_method_s3"
+  source = "./api_method_lambda"
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id_photo.resource_path
@@ -262,11 +262,28 @@ module "members_id_photo_GET" {
 
   prefix = var.prefix
   name = "members_id_photo"
+  description = "Get member photo"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  s3_bucket = aws_s3_bucket.member_photos_bucket.id
-  s3_suffix = ".jpg"
+  lambda_path = "${path.module}/lambda/api/members/{id}/photo/GET"
+
+  lambda_policy = {
+    s3 = {
+      actions = [ "s3:GetObject" ]
+      resources = [ "${aws_s3_bucket.member_photos_bucket.arn}/*.jpg" ]
+    }
+
+    s3_bucket = {
+      actions = [ "s3:ListBucket" ]
+      resources = [ aws_s3_bucket.member_photos_bucket.arn ]
+    }
+  }
+  
+  lambda_env = {
+    EXPIRATION = 3600
+    PHOTO_BUCKET_NAME = aws_s3_bucket.member_photos_bucket.id
+  }
 }
 
 module "members_id_photo_PUT" {

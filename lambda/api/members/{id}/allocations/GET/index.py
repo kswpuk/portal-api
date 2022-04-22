@@ -119,24 +119,10 @@ def handler(event, context):
     })
   
   # Sort by date
-  ret.sort(key=lambda x: x.startDate, reverse=True)
+  ret.sort(key=lambda x: x['startDate'], reverse=True)
 
   return {
     "statusCode": 200,
     "headers": headers,
     "body": json.dumps(ret)
   }
-
-  
-# [
-#   {
-#     "combinedEventId": "gilwell-reunion/2022-09-02",
-#     "membershipNumber": "404754",
-#     "allocation": "ALLOCATED"
-#   },
-#   {
-#     "combinedEventId": "agm/2022-04-23",
-#     "membershipNumber": "404754",
-#     "allocation": "REGISTERED"
-#   }
-# ]
