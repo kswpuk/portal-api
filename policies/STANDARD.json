@@ -13,6 +13,7 @@
         "arn:aws:execute-api:*:*:*/*/GET/members",
         "arn:aws:execute-api:*:*:*/*/GET/members/{membershipNumber}",
         "arn:aws:execute-api:*:*:*/*/PUT/members/{membershipNumber}",
+        "arn:aws:execute-api:*:*:*/*/GET/members/{membershipNumber}/allocations",
         "arn:aws:execute-api:*:*:*/*/GET/members/*/photo",
         "arn:aws:execute-api:*:*:*/*/POST/members/{membershipNumber}/payment",
         "arn:aws:execute-api:*:*:*/*/PUT/members/{membershipNumber}/photo"

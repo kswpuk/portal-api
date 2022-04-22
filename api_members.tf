@@ -27,7 +27,7 @@ module "members_GET" {
   request_template = <<END
 {
   "TableName": "${aws_dynamodb_table.members_table.name}",
-  "ProjectionExpression": "membershipNumber,firstName,surname,#r,#s",
+  "ProjectionExpression": "membershipNumber,firstName,preferredName,surname,#r,#s",
   "ExpressionAttributeNames": {"#r": "role", "#s": "status"}
 }
 END
@@ -134,6 +134,66 @@ module "members_id_PUT" {
   }
 }
 
+# /members/{id}/allocations
+
+module "members_id_allocations" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members_id.resource_id
+  path_part   = "allocations"
+}
+
+module "members_id_allocations_GET" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_id_allocations.resource_path
+
+  http_method   = "GET"
+
+  prefix = var.prefix
+  name = "members_id_allocations"
+  description = "Get allocations for member"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/members/{id}/allocations/GET"
+
+  lambda_policy = {
+    allocations = {
+      actions = [ "dynamodb:Query" ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn,
+        "${aws_dynamodb_table.event_allocation_table.arn}/index/${var.prefix}-member_event_allocations"
+      ]
+    }
+
+    event_series = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ aws_dynamodb_table.event_series_table.arn ]
+    }
+
+    event_instance = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ aws_dynamodb_table.event_instance_table.arn ]
+    }
+
+    members = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [ aws_dynamodb_table.members_table.arn ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_INDEX = "${var.prefix}-member_event_allocations"
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.id
+  }
+}
+
 # /members/{id}/payment
 
 module "members_id_payment" {
@@ -181,6 +241,7 @@ module "members_id_payment_POST" {
     SUCCESS_URL = "https://${aws_api_gateway_rest_api.portal.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.prefix}/payments/membership/{CHECKOUT_SESSION_ID}"
   }
 }
+
 # /members/{id}/photo
 
 module "members_id_photo" {
