@@ -194,6 +194,51 @@ module "members_id_allocations_GET" {
   }
 }
 
+# /members/{id}/necker
+
+module "members_id_necker" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members_id.resource_id
+  path_part   = "necker"
+}
+
+module "members_id_necker_PATCH" {
+  source = "./api_method_dynamodb"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_id_necker.resource_path
+
+  http_method   = "PATCH"
+
+  prefix = var.prefix
+  name = "members_id_necker"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action = "UpdateItem"
+  dynamodb_table_arn = aws_dynamodb_table.members_table.arn
+
+  
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.members_table.name}",
+  "Key": {
+    "membershipNumber": {
+      "S": "$util.escapeJavaScript($input.params("id"))"
+    }
+  },
+  "UpdateExpression": "SET receivedNecker = :v",
+  "ExpressionAttributeValues": {
+    ":v": {
+      "BOOL": #if( $input.json('$.receivedNecker') == false ) false #else true #end
+    }
+  }
+}
+END
+}
+
 # /members/{id}/payment
 
 module "members_id_payment" {

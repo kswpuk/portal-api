@@ -106,6 +106,9 @@ def handler(event, context):
 
   if combined.get("attendanceLimit") is not None:
     combined["attendanceLimit"] = int(combined["attendanceLimit"])
+  
+  if combined.get("cost") is not None:
+    combined["cost"] = float(combined["cost"])
 
   return {
     "statusCode": 200,

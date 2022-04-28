@@ -6,7 +6,8 @@
       "Effect": "Allow",
       "Resource": [
         "arn:aws:execute-api:*:*:*/*/GET/members/*",
-        "arn:aws:execute-api:*:*:*/*/GET/members/*/allocations"
+        "arn:aws:execute-api:*:*:*/*/GET/members/*/allocations",
+        "arn:aws:execute-api:*:*:*/*/PATCH/members/*/necker"
       ]
     }
   ]

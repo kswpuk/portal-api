@@ -132,6 +132,23 @@ def handler(event, context):
     except:
       validationErrors.append("Event URL is not valid")
   
+  if event.get("cost", None) == None:
+    cost = 0
+  else:
+    try:
+      cost = float(event.get("cost"))
+
+      if cost < 0:
+        validationErrors.append("Event cost can not be negative")
+    except:
+      validationErrors.append("Event cost could not be parsed")
+      cost = 0
+
+  if event.get("payee", "") == "":
+    payee = ""
+  else:
+    payee = str(event.get("payee")).strip()
+  
   if event.get("attendanceCriteria") is None:
     attendanceCriteria = []
   elif isinstance(event.get("attendanceCriteria"), list):
@@ -174,6 +191,8 @@ def handler(event, context):
         "startDate": startDate.isoformat(),
         "endDate": endDate.isoformat(),
         "eventUrl": eventUrl,
+        "cost": cost,
+        "payee": payee,
         "attendanceCriteria": attendanceCriteria,
         "attendanceLimit": attendanceLimit
       }

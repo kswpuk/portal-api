@@ -1,4 +1,5 @@
 import boto3
+from decimal import Decimal
 import json
 import logging
 import os
@@ -85,7 +86,10 @@ def handler(event, context):
   logger.debug(f"Creating event {eventSeriesId}/{eventId}...")
 
   response = event_instance_table.put_item(
-    Item=validationResult["event"],
+    Item={
+      **validationResult["event"],
+      "cost": Decimal(str(validationResult["event"].get("cost", 0.00))).quantize(Decimal('.01'))
+    },
     ReturnValues = "NONE"
   )
 
