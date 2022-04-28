@@ -11,24 +11,43 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 APPLICATION_ACCEPTED_TEMPLATE = os.getenv('APPLICATION_ACCEPTED_TEMPLATE')
-GROUP = os.getenv('GROUP')
 MAILCHIMP_LIST_ID = os.getenv('MAILCHIMP_LIST_ID')
 MAILCHIMP_SERVER_PREFIX = os.getenv('MAILCHIMP_SERVER_PREFIX')
+PHOTO_BUCKET_NAME = os.getenv('PHOTO_BUCKET_NAME')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 USER_POOL = os.getenv('USER_POOL')
 
+MANAGER_GROUP = os.getenv('MANAGER_GROUP')
+EVENTS_GROUP = os.getenv('EVENTS_GROUP')
+MEMBERS_GROUP = os.getenv('MEMBERS_GROUP')
+MONEY_GROUP = os.getenv('MONEY_GROUP')
+MEDIA_GROUP = os.getenv('MEDIA_GROUP')
+SOCIALS_GROUP = os.getenv('SOCIALS_GROUP')
+COMMITTEE_GROUP = os.getenv('COMMITTEE_GROUP')
+STANDARD_GROUP = os.getenv('STANDARD_GROUP')
+
 logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"APPLICATION_ACCEPTED_TEMPLATE = {APPLICATION_ACCEPTED_TEMPLATE}")
-logger.info(f"GROUP = {GROUP}")
 logger.info(f"MAILCHIMP_LIST_ID = {MAILCHIMP_LIST_ID}")
 logger.info(f"MAILCHIMP_SERVER_PREFIX = {MAILCHIMP_SERVER_PREFIX}")
+logger.info(f"PHOTO_BUCKET_NAME = {PHOTO_BUCKET_NAME}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"USER_POOL = {USER_POOL}")
+
+logger.info(f"MANAGER_GROUP = {MANAGER_GROUP}")
+logger.info(f"EVENTS_GROUP = {EVENTS_GROUP}")
+logger.info(f"MEMBERS_GROUP = {MEMBERS_GROUP}")
+logger.info(f"MONEY_GROUP = {MONEY_GROUP}")
+logger.info(f"MEDIA_GROUP = {MEDIA_GROUP}")
+logger.info(f"SOCIALS_GROUP = {SOCIALS_GROUP}")
+logger.info(f"COMMITTEE_GROUP = {COMMITTEE_GROUP}")
+logger.info(f"STANDARD_GROUP = {STANDARD_GROUP}")
 
 # AWS Clients
 cognito = boto3.client('cognito-idp')
 secrets = boto3.client('secretsmanager')
 ses = boto3.client('ses')
+s3 = boto3.client('s3')
 
 # Mailchimp Client
 try:
@@ -64,9 +83,11 @@ def handler(event, context):
       subscribe_to_mailchimp(membershipNumber, record['dynamodb']['NewImage'])
     elif record['eventName'] == "MODIFY":
       update_user(membershipNumber, record['dynamodb']['NewImage'], record['dynamodb']['OldImage'])
+      update_user_groups(membershipNumber, record['dynamodb']['NewImage'], record['dynamodb']['OldImage'])
     elif record['eventName'] == "REMOVE":
       delete_user(membershipNumber)
       unsubscribe_from_mailchimp(membershipNumber, record['dynamodb']['OldImage'])
+      delete_member_photo(membershipNumber)
 
 
 def send_welcome_email(membershipNumber, newImage):
@@ -122,10 +143,10 @@ def create_user(membershipNumber, newImage):
     cognito.admin_add_user_to_group(
       UserPoolId=USER_POOL,
       Username=membershipNumber,
-      GroupName=GROUP
+      GroupName=STANDARD_GROUP
     )
   except Exception as e:
-    logger.error(f"Unable to add user {membershipNumber} to group {GROUP}: {str(e)}")
+    logger.error(f"Unable to add user {membershipNumber} to group {STANDARD_GROUP}: {str(e)}")
   
 
 def subscribe_to_mailchimp(membershipNumber, member):
@@ -218,6 +239,82 @@ def update_user(membershipNumber, newImage, oldImage):
       logger.error(f"Unable to update {membershipNumber} in MailChimp: {str(e)}")
 
 
+def update_user_groups(membershipNumber, newImage, oldImage):
+  oldRole = oldImage.get('role', {}).get('S')
+  newRole = newImage.get('role', {}).get('S')
+
+  if oldRole == newRole:
+    logger.info("Changes don't require changes to Cognito groups")
+    return
+  
+  oldRoleGroup = get_cognito_group(oldRole)
+  newRoleGroup = get_cognito_group(newRole)
+
+  if oldRoleGroup is not None:
+    # Remove old role
+    logger.info(f"Removing {membershipNumber} from Cognito group {oldRoleGroup}")
+    try:
+      cognito.admin_remove_user_from_group(
+        UserPoolId=USER_POOL,
+        Username=membershipNumber,
+        GroupName=oldRoleGroup
+      )
+    except Exception as e:
+      logger.error(f"Unable to remove user {membershipNumber} from group {oldRoleGroup}: {str(e)}")
+  
+  if newRoleGroup is not None:
+    # Add new role
+    logger.info(f"Adding {membershipNumber} to Cognito group {newRoleGroup}")
+    try:
+      cognito.admin_add_user_to_group(
+        UserPoolId=USER_POOL,
+        Username=membershipNumber,
+        GroupName=newRoleGroup
+      )
+    except Exception as e:
+      logger.error(f"Unable to add user {membershipNumber} to group {newRoleGroup}: {str(e)}")
+
+  if oldRoleGroup is not None and newRoleGroup is None:
+    # Remove from COMMITTEE group
+    logger.info(f"Removing {membershipNumber} from Cognito group {COMMITTEE_GROUP}")
+    try:
+      cognito.admin_remove_user_from_group(
+        UserPoolId=USER_POOL,
+        Username=membershipNumber,
+        GroupName=COMMITTEE_GROUP
+      )
+    except Exception as e:
+      logger.error(f"Unable to remove user {membershipNumber} from group {COMMITTEE_GROUP}: {str(e)}")
+  elif newRoleGroup is not None and oldRoleGroup is None:
+    # Add to COMMITTEE group
+    logger.info(f"Adding {membershipNumber} to Cognito group {COMMITTEE_GROUP}")
+    try:
+      cognito.admin_add_user_to_group(
+        UserPoolId=USER_POOL,
+        Username=membershipNumber,
+        GroupName=COMMITTEE_GROUP
+      )
+    except Exception as e:
+      logger.error(f"Unable to add user {membershipNumber} to group {COMMITTEE_GROUP}: {str(e)}")
+
+
+def get_cognito_group(role):
+  if role == "MANAGER":
+    return MANAGER_GROUP
+  elif role == "EVENTS":
+    return EVENTS_GROUP
+  elif role == "MEMBERS":
+    return MEMBERS_GROUP
+  elif role == "MONEY":
+    return MONEY_GROUP
+  elif role == "MEDIA":
+    return MEDIA_GROUP
+  elif role == "SOCIALS":
+    return SOCIALS_GROUP
+  else:
+    return None
+
+
 def delete_user(membershipNumber):
   try:
     cognito.admin_delete_user(
@@ -245,3 +342,18 @@ def unsubscribe_from_mailchimp(membershipNumber, member):
 def get_mailchimp_hash(email):
   result = hashlib.md5(email.encode())
   return result.hexdigest()
+
+
+def delete_member_photo(membershipNumber):
+  try:
+    s3.delete_objects(
+      Bucket=PHOTO_BUCKET_NAME,
+      Delete={
+        "Objects": [
+          { "Key": f"{membershipNumber}.jpg" },
+          { "Key": f"{membershipNumber}.thumb.jpg" }
+        ]
+      }
+    )
+  except Exception as e:
+    logger.error(f"Unable to delete photo for {membershipNumber}: {str(e)}")

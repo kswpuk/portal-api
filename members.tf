@@ -223,7 +223,7 @@ resource "aws_ses_template" "account_deleted" {
   html    = file("${path.module}/emails/account_deleted.html")
 }
 
-# Lambda - Sync changes to Cognito and send Welcome e-mail
+# Lambda - Sync changes to Cognito and handle updates to members
 
 module "sync_members" {
   source = "terraform-aws-modules/lambda/aws"
@@ -261,6 +261,7 @@ module "sync_members" {
         "cognito-idp:AdminAddUserToGroup",
         "cognito-idp:AdminCreateUser",
         "cognito-idp:AdminDeleteUser",
+        "cognito-idp:AdminRemoveUserFromGroup",
         "cognito-idp:AdminUpdateUserAttributes"
       ]
       resources = [
@@ -282,6 +283,15 @@ module "sync_members" {
         data.aws_ses_domain_identity.qswp.arn
       ]
     }
+
+    s3 = {
+      actions = [
+        "s3:DeleteObject"
+      ]
+      resources = [
+        "${aws_s3_bucket.member_photos_bucket.arn}/*.jpg"
+      ]
+    }
   }
 
   role_name = "${var.prefix}-sync_members-role"
@@ -294,11 +304,20 @@ module "sync_members" {
   environment_variables = {
     API_KEY_SECRET_NAME = aws_secretsmanager_secret.api_keys.arn
     APPLICATION_ACCEPTED_TEMPLATE = aws_ses_template.application_accepted.name
-    GROUP = aws_cognito_user_group.standard.name
     MAILCHIMP_LIST_ID = var.mailchimp_list_id
     MAILCHIMP_SERVER_PREFIX = var.mailchimp_server_prefix
+    PHOTO_BUCKET_NAME = aws_s3_bucket.member_photos_bucket.id
     PORTAL_DOMAIN = aws_route53_record.portal.fqdn
     USER_POOL = aws_cognito_user_pool.portal.id
+
+    MANAGER_GROUP = aws_cognito_user_group.manager.name
+    EVENTS_GROUP = aws_cognito_user_group.events.name
+    MEMBERS_GROUP = aws_cognito_user_group.members.name
+    MONEY_GROUP = aws_cognito_user_group.money.name
+    MEDIA_GROUP = aws_cognito_user_group.media.name
+    SOCIALS_GROUP = aws_cognito_user_group.socials.name
+    COMMITTEE_GROUP = aws_cognito_user_group.committee.name
+    STANDARD_GROUP = aws_cognito_user_group.standard.name
   }
 }
 
