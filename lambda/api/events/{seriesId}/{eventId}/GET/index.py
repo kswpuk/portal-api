@@ -77,7 +77,7 @@ def handler(event, context):
         Key={
           "membershipNumber": allocation['membershipNumber']
         },
-        ProjectionExpression="membershipNumber,firstName,preferredName,surname"
+        ProjectionExpression="membershipNumber,firstName,preferredName,surname,receivedNecker"
       )['Item']
       
     except Exception as e:
@@ -86,7 +86,7 @@ def handler(event, context):
     
     enh_allocations.append({
       "membershipNumber": allocation['membershipNumber'],
-      "allocation": allocation['allocation'],
+      "allocation": allocation['allocation']
     } | member)
   
   try:
