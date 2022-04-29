@@ -3,12 +3,6 @@ import datetime
 import logging
 import os
 
-# Default allocation weighting
-DEFAULT_ALLOCATION_WEIGHTING = {
-  "under_25": 1,
-  "joined_1yr": 1
-}
-
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
@@ -60,9 +54,9 @@ def handler(event, context):
 
   event_start = datetime.date.fromisoformat(event.get("startDate")[0:10])
 
-  allocation_weighting = event.get("allocationWeighting", DEFAULT_ALLOCATION_WEIGHTING)
-  if type(allocation_weighting) is not dict or len(allocation_weighting.keys()) == 0:
-    allocation_weighting = DEFAULT_ALLOCATION_WEIGHTING
+  allocation_weighting = event.get("weightingCriteria", {})
+  if type(allocation_weighting) is not dict:
+    allocation_weighting = {}
 
   rules = allocation_weighting.keys()
 

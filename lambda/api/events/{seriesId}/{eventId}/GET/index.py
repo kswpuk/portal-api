@@ -63,13 +63,13 @@ def handler(event, context):
     logger.error(f"Unable to get event instance (Event Series = {event_series_id}, Event ID = {event_id}) from {EVENT_INSTANCE_TABLE}: {str(e)}")
     raise e
   
-  # Convert decimal to int in instance["allocationWeighting"]
-  if "allocationWeighting" in instance and type(instance["allocationWeighting"]) is dict:
+  # Convert decimal to int in instance["weightingCriteria"]
+  if "weightingCriteria" in instance and type(instance["weightingCriteria"]) is dict:
     weightings = {}
-    for k, v in instance["allocationWeighting"].items():
+    for k, v in instance["weightingCriteria"].items():
       weightings[k] = int(v)
     
-    instance["allocationWeighting"] = weightings
+    instance["weightingCriteria"] = weightings
   
   try:
     allocations = get_allocations(event_series_id + "/" + event_id)

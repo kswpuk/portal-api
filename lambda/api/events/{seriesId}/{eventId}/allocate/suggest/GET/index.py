@@ -6,12 +6,6 @@ import logging
 import numpy as np
 import os
 
-# Default allocation weighting
-DEFAULT_ALLOCATION_WEIGHTING = {
-  "under_25": 1,
-  "joined_1yr": 1
-}
-
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
@@ -60,9 +54,9 @@ def handler(event, context):
     raise e
 
   # Get rules
-  rules = instance.get("allocationWeighting", DEFAULT_ALLOCATION_WEIGHTING)
+  rules = instance.get("weightingCriteria", None)
   if type(rules) is not dict or len(rules.keys()) == 0:
-    rules = DEFAULT_ALLOCATION_WEIGHTING
+    rules = None
 
   # If limit is provided use that, otherwise calculate from event
   if 'queryStringParameters' in event and event['queryStringParameters'] is not None and 'limit' in event['queryStringParameters']:
@@ -85,60 +79,66 @@ def handler(event, context):
       "body": json.dumps(list(map(lambda a: a["membershipNumber"], registered_allocations)))
     }
 
-  weightings = {}
-  matches = {}
-
-  # Calculate initial weighting for each member
-  for allocation in registered_allocations:
-    membership_number = allocation['membershipNumber']
-
-    # Get weightings for each member
-    try:
-      w = json.loads(lambda_client.invoke(
-        FunctionName=WEIGHTING_ARN,
-        Payload=json.dumps({
-          "eventSeriesId": event_series_id,
-          "eventId": event_id,
-          "membershipNumber": membership_number
-        })
-      )['Payload'].read())
-
-      if 'errorType' in w:
-        logger.error(f"Lambda failed to calculate member {membership_number}'s weighting for event {event_series_id}/{event_id}: {w['errorType']} ({w.get('errorMessage')})")
-      else:
-        matches[membership_number] = w['weightings']
-        weightings[membership_number] = 0
-    except Exception as e:
-      logger.error(f"Unable to invoke Lambda to calculate member {membership_number}'s weighting for event {event_series_id}/{event_id}: {str(e)}")
-      raise e
-
-  # Catch the case where we've not been able to calculate weightings for all
-  if len(weightings) <= attendanceLimit or len(weightings) == 0:
-    return {
-      "statusCode": 200,
-      "headers": headers,
-      "body": json.dumps(list(weightings.keys()))
-    }
-
-  # Get initial weighintgs
-  for k, v in rules.items():
-    for membership_number in matches:
-      weightings[membership_number] += v*matches[membership_number].get(k, 0)
-
-  # Shift counts so all are above 0
-  min_val = min(weightings.values())
-  if min_val < 1:
-    offset = -min_val + 1
-    for membership_number in weightings:
-      weightings[membership_number] += offset
-
-  # Normalize so values sum to 1
-  sum_val = sum(weightings.values())
-  for membership_number in weightings:
-    weightings[membership_number] /= sum_val
+  # If no weighting, then just randomly allocate
+  if rules is None:
+    selected = np.random.choice(list(weightings.keys()), attendanceLimit, replace=False)
   
-  # Weighted sample to get suggested allocations up to limit
-  selected = np.random.choice(list(weightings.keys()), attendanceLimit, replace=False, p=list(weightings.values()))
+  # Otherwise apply the rules
+  else:
+    weightings = {}
+    matches = {}
+
+    # Calculate initial weighting for each member
+    for allocation in registered_allocations:
+      membership_number = allocation['membershipNumber']
+
+      # Get weightings for each member
+      try:
+        w = json.loads(lambda_client.invoke(
+          FunctionName=WEIGHTING_ARN,
+          Payload=json.dumps({
+            "eventSeriesId": event_series_id,
+            "eventId": event_id,
+            "membershipNumber": membership_number
+          })
+        )['Payload'].read())
+
+        if 'errorType' in w:
+          logger.error(f"Lambda failed to calculate member {membership_number}'s weighting for event {event_series_id}/{event_id}: {w['errorType']} ({w.get('errorMessage')})")
+        else:
+          matches[membership_number] = w['weightings']
+          weightings[membership_number] = 0
+      except Exception as e:
+        logger.error(f"Unable to invoke Lambda to calculate member {membership_number}'s weighting for event {event_series_id}/{event_id}: {str(e)}")
+        raise e
+
+    # Catch the case where we've not been able to calculate weightings for all
+    if len(weightings) <= attendanceLimit or len(weightings) == 0:
+      return {
+        "statusCode": 200,
+        "headers": headers,
+        "body": json.dumps(list(weightings.keys()))
+      }
+
+    # Get initial weighintgs
+    for k, v in rules.items():
+      for membership_number in matches:
+        weightings[membership_number] += v*matches[membership_number].get(k, 0)
+
+    # Shift counts so all are above 0
+    min_val = min(weightings.values())
+    if min_val < 1:
+      offset = -min_val + 1
+      for membership_number in weightings:
+        weightings[membership_number] += offset
+
+    # Normalize so values sum to 1
+    sum_val = sum(weightings.values())
+    for membership_number in weightings:
+      weightings[membership_number] /= sum_val
+    
+    # Weighted sample to get suggested allocations up to limit
+    selected = np.random.choice(list(weightings.keys()), attendanceLimit, replace=False, p=list(weightings.values()))
 
   # Return results
   return {
