@@ -553,7 +553,7 @@ module "events_seriesId_eventId_allocate_suggest" {
 }
 
 
-module "events_seriesId_eventId_allocate_suggest_PUT" {
+module "events_seriesId_eventId_allocate_suggest_GET" {
   source = "./api_method_lambda"
   
   rest_api_name = aws_api_gateway_rest_api.portal.name

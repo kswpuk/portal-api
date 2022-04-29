@@ -12,6 +12,7 @@
         "arn:aws:execute-api:*:*:*/*/PUT/events/*/*",
         "arn:aws:execute-api:*:*:*/*/DELETE/events/*/*",
         "arn:aws:execute-api:*:*:*/*/PUT/events/*/*/allocate",
+        "arn:aws:execute-api:*:*:*/*/GET/events/*/*/allocate/suggest",
         "arn:aws:execute-api:*:*:*/*/DELETE/events/*/*/allocate/{membershipNumber}"
       ]
     }
