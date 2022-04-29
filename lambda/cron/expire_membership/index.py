@@ -50,7 +50,11 @@ def handler(event, context):
   for expireSoonMember in expireSoonMembers['Items']:   
     # Send e-mail to members who will expire soon
     try:
-      name = expireSoonMember.get('preferredName', expireSoonMember['firstName']) + " " + expireSoonMember['surname']
+      fname = expireSoonMember.get('preferredName', expireSoonMember['firstName'])
+      if fname.strip() == "":
+        fname = expireSoonMember['firstName']
+        
+      name = fname + " " + expireSoonMember['surname']
       ses.send_templated_email(
         Source='"QSWP Portal" <portal@qswp.org.uk>',
         Destination={

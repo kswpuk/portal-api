@@ -542,6 +542,69 @@ module "events_seriesId_eventId_allocate_id_DELETE" {
   }
 }
 
+# /events/{seriesId}/{eventId}/allocate/suggest
+
+module "events_seriesId_eventId_allocate_suggest" {
+  source = "./api_resource"
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_seriesId_eventId_allocate.resource_id
+  path_part   = "suggest"
+}
+
+
+module "events_seriesId_eventId_allocate_suggest_PUT" {
+  source = "./api_method_lambda"
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_seriesId_eventId_allocate_suggest.resource_path
+
+  http_method = "GET"
+
+  prefix = var.prefix
+  name = "events_seriesId_eventId_allocate_suggest"
+  description = "Suggest allocations for an event"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/allocate/suggest/GET"
+
+  lambda_policy = {
+    dynamodb_getitem = {
+      actions = [ 
+        "dynamodb:GetItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn
+      ]
+    }
+
+    dynamodb_query = {
+      actions = [ 
+        "dynamodb:Query"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn
+      ]
+    }
+
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_events_weighting.lambda_function_arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+    WEIGHTING_ARN = module.utils_events_weighting.lambda_function_arn
+  }
+}
+
 # /events/{seriesId}/{eventId}/register
 
 module "events_seriesId_eventId_register" {
