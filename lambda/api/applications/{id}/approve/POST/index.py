@@ -66,6 +66,7 @@ def handler(event, context):
         "address": application["address"],
         "postcode": application["postcode"],
         "lastUpdated": application["submittedAt"],
+        "qsaReceived": application["qsaReceived"],
         "status": "INACTIVE",
         "joinDate": date.today().isoformat()
       }

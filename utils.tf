@@ -107,6 +107,7 @@ module "utils_events_weighting" {
       ]
       resources = [
         aws_dynamodb_table.event_instance_table.arn,
+        aws_dynamodb_table.event_series_table.arn,
         aws_dynamodb_table.members_table.arn
       ]
     }
@@ -116,7 +117,7 @@ module "utils_events_weighting" {
         "dynamodb:Query",
       ]
       resources = [ 
-        aws_dynamodb_table.event_allocation_table.arn
+        "${aws_dynamodb_table.event_allocation_table.arn}/index/*"
       ]
     }
   }
@@ -130,7 +131,9 @@ module "utils_events_weighting" {
 
   environment_variables = {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    EVENT_ALLOCATIONS_INDEX = "${var.prefix}-member_event_allocations"
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
     MEMBERS_TABLE = aws_dynamodb_table.members_table.id
   }
 }

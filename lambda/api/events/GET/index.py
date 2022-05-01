@@ -129,7 +129,7 @@ def scan_events(**kwargs):
     if last_evaluated_key:
       response = event_instance_table.scan(
         ExclusiveStartKey=last_evaluated_key,
-        ProjectionExpression="eventSeriesId,eventId,endDate,#l,locationType,postcode,startDate",
+        ProjectionExpression="eventSeriesId,eventId,endDate,#l,locationType,postcode,startDate,registrationDate",
         ExpressionAttributeNames={
           "#l": "location"
         },
@@ -137,7 +137,7 @@ def scan_events(**kwargs):
       )
     else: 
       response = event_instance_table.scan(
-        ProjectionExpression="eventSeriesId,eventId,endDate,#l,locationType,postcode,startDate",
+        ProjectionExpression="eventSeriesId,eventId,endDate,#l,locationType,postcode,startDate,registrationDate",
         ExpressionAttributeNames={
           "#l": "location"
         },
