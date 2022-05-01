@@ -32,6 +32,7 @@ module "auth_lambda" {
 }
 
 # Cognito
+
 resource "aws_cognito_user_pool" "portal" {
   name = "${var.prefix}-userpool"
 
@@ -58,7 +59,11 @@ resource "aws_cognito_user_pool" "portal" {
     require_symbols = false
   }
 
-  # TODO: Set up the e-mail so that it comes a QSWP address. Cognito requires SES configured in eu-west-1 to do this, not eu-west-2 as we currently use
+  email_configuration {
+    email_sending_account = "DEVELOPER"
+    from_email_address = "QSWP Portal <${var.prefix}@${var.domain}>"
+    source_arn = data.aws_ses_domain_identity.qswp.arn
+  }
 }
 
 resource "aws_cognito_user_pool_client" "portal" {

@@ -117,6 +117,11 @@ def handler(event, context):
   
   if combined.get("cost") is not None:
     combined["cost"] = float(combined["cost"])
+  
+  # Remove any legacy information
+  for k in list(combined.keys()):
+    if k.startswith("legacy"):
+      del combined[k]
 
   return {
     "statusCode": 200,

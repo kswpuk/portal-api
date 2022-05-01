@@ -53,7 +53,7 @@ resource "aws_cloudwatch_event_rule" "daily_0700" {
 # Data
 
 data "aws_ses_domain_identity" "qswp" {
-  domain = "qswp.org.uk"
+  domain = var.domain
 }
 
 data "aws_region" "current" {}

@@ -1,5 +1,6 @@
 .devcontainer/
 .terraform/
+.terraform.tfstate.d/
 builds/
 
 *.tfvars
