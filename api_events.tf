@@ -2,6 +2,7 @@
 
 module "events" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = aws_api_gateway_rest_api.portal.root_resource_id
@@ -10,6 +11,7 @@ module "events" {
 
 module "events_GET" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events.resource_path
@@ -48,6 +50,7 @@ module "events_GET" {
 # /events/_series
 module "events_series" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events.resource_id
@@ -56,6 +59,7 @@ module "events_series" {
 
 module "events_series_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_series.resource_path
@@ -83,6 +87,7 @@ END
 
 module "events_seriesId" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events.resource_id
@@ -91,6 +96,7 @@ module "events_seriesId" {
 
 module "events_seriesId_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId.resource_path
@@ -122,6 +128,7 @@ END
 
 module "events_seriesId_DELETE" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId.resource_path
@@ -163,6 +170,7 @@ module "events_seriesId_DELETE" {
 
 module "events_seriesId_POST" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId.resource_path
@@ -213,6 +221,7 @@ module "events_seriesId_POST" {
 
 module "events_seriesId_PUT" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId.resource_path
@@ -265,6 +274,7 @@ module "events_seriesId_PUT" {
 
 module "events_seriesId_eventId" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events_seriesId.resource_id
@@ -274,6 +284,7 @@ module "events_seriesId_eventId" {
 
 module "events_seriesId_eventId_DELETE" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId.resource_path
@@ -305,6 +316,7 @@ END
 
 module "events_seriesId_eventId_GET" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId.resource_path
@@ -361,6 +373,7 @@ module "events_seriesId_eventId_GET" {
 
 module "events_seriesId_eventId_POST" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId.resource_path
@@ -410,6 +423,7 @@ module "events_seriesId_eventId_POST" {
 
 module "events_seriesId_eventId_PUT" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId.resource_path
@@ -461,6 +475,7 @@ module "events_seriesId_eventId_PUT" {
 
 module "events_seriesId_eventId_allocate" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events_seriesId_eventId.resource_id
@@ -470,6 +485,7 @@ module "events_seriesId_eventId_allocate" {
 
 module "events_seriesId_eventId_allocate_PUT" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId_allocate.resource_path
@@ -504,6 +520,7 @@ module "events_seriesId_eventId_allocate_PUT" {
 
 module "events_seriesId_eventId_allocate_id" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events_seriesId_eventId_allocate.resource_id
@@ -512,6 +529,7 @@ module "events_seriesId_eventId_allocate_id" {
 
 module "events_seriesId_eventId_allocate_id_DELETE" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId_allocate_id.resource_path
@@ -546,6 +564,7 @@ module "events_seriesId_eventId_allocate_id_DELETE" {
 
 module "events_seriesId_eventId_allocate_suggest" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events_seriesId_eventId_allocate.resource_id
@@ -555,6 +574,7 @@ module "events_seriesId_eventId_allocate_suggest" {
 
 module "events_seriesId_eventId_allocate_suggest_GET" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId_allocate_suggest.resource_path
@@ -609,6 +629,7 @@ module "events_seriesId_eventId_allocate_suggest_GET" {
 
 module "events_seriesId_eventId_register" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events_seriesId_eventId.resource_id
@@ -619,6 +640,7 @@ module "events_seriesId_eventId_register" {
 
 module "events_seriesId_eventId_register_id" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.events_seriesId_eventId_register.resource_id
@@ -627,6 +649,7 @@ module "events_seriesId_eventId_register_id" {
 
 module "events_seriesId_eventId_register_id_POST" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.events_seriesId_eventId_register_id.resource_path

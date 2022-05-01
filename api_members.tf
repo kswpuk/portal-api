@@ -2,6 +2,7 @@
 
 module "members" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = aws_api_gateway_rest_api.portal.root_resource_id
@@ -10,6 +11,7 @@ module "members" {
 
 module "members_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members.resource_path
@@ -39,6 +41,7 @@ END
 
 module "members_id" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.members.resource_id
@@ -47,6 +50,7 @@ module "members_id" {
 
 module "members_id_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id.resource_path
@@ -79,6 +83,7 @@ END
 
 module "members_id_DELETE" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id.resource_path
@@ -108,6 +113,7 @@ END
 
 module "members_id_PUT" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id.resource_path
@@ -138,6 +144,7 @@ module "members_id_PUT" {
 
 module "members_id_allocations" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.members_id.resource_id
@@ -146,6 +153,7 @@ module "members_id_allocations" {
 
 module "members_id_allocations_GET" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id_allocations.resource_path
@@ -198,6 +206,7 @@ module "members_id_allocations_GET" {
 
 module "members_id_necker" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.members_id.resource_id
@@ -206,6 +215,7 @@ module "members_id_necker" {
 
 module "members_id_necker_PATCH" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id_necker.resource_path
@@ -243,6 +253,7 @@ END
 
 module "members_id_payment" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.members_id.resource_id
@@ -251,6 +262,7 @@ module "members_id_payment" {
 
 module "members_id_payment_POST" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id_payment.resource_path
@@ -291,6 +303,7 @@ module "members_id_payment_POST" {
 
 module "members_id_photo" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.members_id.resource_id
@@ -299,6 +312,7 @@ module "members_id_photo" {
 
 module "members_id_photo_GET" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id_photo.resource_path
@@ -333,6 +347,7 @@ module "members_id_photo_GET" {
 
 module "members_id_photo_PUT" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members_id_photo.resource_path

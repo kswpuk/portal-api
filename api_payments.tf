@@ -2,6 +2,7 @@
 
 module "payments" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = aws_api_gateway_rest_api.portal.root_resource_id
@@ -11,6 +12,7 @@ module "payments" {
 # /payments/membership
 module "payments_membership" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.payments.resource_id
@@ -20,6 +22,7 @@ module "payments_membership" {
 # /payments/membership/{session}
 module "payments_membership_session" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.payments_membership.resource_id
@@ -28,6 +31,7 @@ module "payments_membership_session" {
 
 module "payments_membership_session_GET" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.payments_membership_session.resource_path

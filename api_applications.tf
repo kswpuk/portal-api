@@ -2,6 +2,7 @@
 
 module "applications" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = aws_api_gateway_rest_api.portal.root_resource_id
@@ -10,6 +11,7 @@ module "applications" {
 
 module "applications_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications.resource_path
@@ -37,6 +39,7 @@ END
 
 module "applications_id" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications.resource_id
@@ -45,6 +48,7 @@ module "applications_id" {
 
 module "applications_id_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id.resource_path
@@ -77,6 +81,7 @@ END
 
 module "applications_id_POST" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id.resource_path
@@ -150,6 +155,7 @@ module "applications_id_POST" {
 
 module "applications_id_approve" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -158,6 +164,7 @@ module "applications_id_approve" {
 
 module "applications_id_approve_POST" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id_approve.resource_path
@@ -201,6 +208,7 @@ module "applications_id_approve_POST" {
 
 module "applications_id_evidence" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -209,6 +217,7 @@ module "applications_id_evidence" {
 
 module "applications_id_evidence_GET" {
   source = "./api_method_s3"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id_evidence.resource_path
@@ -227,6 +236,7 @@ module "applications_id_evidence_GET" {
 # /applications/{id}/head
 module "applications_id_head" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -235,6 +245,7 @@ module "applications_id_head" {
 
 module "applications_id_head_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id_head.resource_path
@@ -268,6 +279,7 @@ END
 
 module "applications_id_references" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -276,6 +288,7 @@ module "applications_id_references" {
 
 module "applications_id_references_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id_references.resource_path
@@ -309,6 +322,7 @@ END
 
 module "applications_id_references_POST" {
   source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id_references.resource_path
@@ -374,6 +388,7 @@ module "applications_id_references_POST" {
 
 module "applications_id_references_email" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id_references.resource_id
@@ -382,6 +397,7 @@ module "applications_id_references_email" {
 
 module "applications_id_references_email_GET" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id_references_email.resource_path
@@ -419,6 +435,7 @@ END
 
 module "applications_id_references_email_accept" {
   source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id_references_email.resource_id
@@ -427,6 +444,7 @@ module "applications_id_references_email_accept" {
 
 module "applications_id_references_email_accept_PATCH" {
   source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.applications_id_references_email_accept.resource_path
