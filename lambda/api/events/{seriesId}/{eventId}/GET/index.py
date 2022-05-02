@@ -9,12 +9,14 @@ import os
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
+COMMITTEE_GROUP = os.getenv('COMMITTEE_GROUP')
 ELIGIBILITY_ARN = os.getenv('ELIGIBILITY_ARN')
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
 EVENT_INSTANCE_TABLE = os.getenv('EVENT_INSTANCE_TABLE')
 EVENT_SERIES_TABLE = os.getenv('EVENT_SERIES_TABLE')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
 
+logger.info(f"COMMITTEE_GROUP = {COMMITTEE_GROUP}")
 logger.info(f"ELIGIBILITY_ARN = {ELIGIBILITY_ARN}")
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_INSTANCE_TABLE = {EVENT_INSTANCE_TABLE}")
@@ -40,7 +42,15 @@ def handler(event, context):
   event_series_id = event['pathParameters']['seriesId']
   event_id = event['pathParameters']['eventId']
 
-  membership_number = event['requestContext']['authorizer']['membershipNumber']
+  try:
+    membership_number = event['requestContext']['authorizer']['membershipNumber']    
+  except:
+    membership_number = None
+
+  try:
+    groups = event['requestContext']['authorizer']['groups'].split(",")
+  except:
+    groups = []
   
   try:
     event_series = event_series_table.get_item(
@@ -77,6 +87,10 @@ def handler(event, context):
     logger.error(f"Unable to get event allocations (Event Series = {event_series_id}, Event ID = {event_id}) from {EVENT_ALLOCATIONS_TABLE}: {str(e)}")
     raise e
   
+  member_projection = "membershipNumber,firstName,preferredName,surname"
+  if COMMITTEE_GROUP in groups:
+    member_projection = "membershipNumber,firstName,preferredName,surname,email,receivedNecker"
+
   enh_allocations = []
   for allocation in allocations:
     member = {}
@@ -85,7 +99,7 @@ def handler(event, context):
         Key={
           "membershipNumber": allocation['membershipNumber']
         },
-        ProjectionExpression="membershipNumber,firstName,preferredName,surname,receivedNecker"
+        ProjectionExpression=member_projection
       )['Item']
       
     except Exception as e:
@@ -97,18 +111,21 @@ def handler(event, context):
       "allocation": allocation['allocation']
     } | member)
   
-  try:
-    eligible = json.loads(lambda_client.invoke(
-      FunctionName=ELIGIBILITY_ARN,
-      Payload=json.dumps({
-        "eventSeriesId": event_series_id,
-        "eventId": event_id,
-        "membershipNumber": membership_number
-      })
-    )['Payload'].read())
-  except Exception as e:
-    logger.error(f"Unable to confirm event {event_series_id}/{event_id} eligibility for {membership_number}: {str(e)}")
-    raise e
+  if membership_number is not None:
+    try:
+      eligible = json.loads(lambda_client.invoke(
+        FunctionName=ELIGIBILITY_ARN,
+        Payload=json.dumps({
+          "eventSeriesId": event_series_id,
+          "eventId": event_id,
+          "membershipNumber": membership_number
+        })
+      )['Payload'].read())
+    except Exception as e:
+      logger.error(f"Unable to confirm event {event_series_id}/{event_id} eligibility for {membership_number}: {str(e)}")
+      raise e
+  else:
+    eligible = {}
 
   combined = instance | event_series | {"allocations": enh_allocations, "eligibility": eligible}
 

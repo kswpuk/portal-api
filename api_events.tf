@@ -363,6 +363,7 @@ module "events_seriesId_eventId_GET" {
   }
   
   lambda_env = {
+    COMMITTEE_GROUP = aws_cognito_user_group.committee.name
     ELIGIBILITY_ARN = module.utils_events_eligible.lambda_function_arn
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id

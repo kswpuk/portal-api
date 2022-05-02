@@ -66,7 +66,7 @@ def handler(event, context):
             
             logger.debug(f"Policy generated: {policy}")
 
-            return get_response_object(policy, context={"membershipNumber": claims['username']})
+            return get_response_object(policy, context={"membershipNumber": claims['username'], "groups": ','.join(groups)})
 
         logger.warning("No matching policies found in DynamoDB")
         return get_deny_policy()
