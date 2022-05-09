@@ -66,7 +66,7 @@ def handler(event, context):
             
             logger.debug(f"Policy generated: {policy}")
 
-            return get_response_object(policy, context={"membershipNumber": claims['username'], "groups": ','.join(groups)})
+            return get_response_object(policy, principalId=claims['username'], context={"membershipNumber": claims['username'], "groups": ','.join(groups)})
 
         logger.warning("No matching policies found in DynamoDB")
         return get_deny_policy()
@@ -78,7 +78,7 @@ def handler(event, context):
     return get_deny_policy()
 
 
-def get_response_object(policyDocument, principalId='yyyyyyyy', context={}):
+def get_response_object(policyDocument, principalId='unknown', context={}):
     return {
         "principalId": principalId,
         "policyDocument": policyDocument,
@@ -89,7 +89,7 @@ def get_response_object(policyDocument, principalId='yyyyyyyy', context={}):
 
 def get_deny_policy():
     return {
-        "principalId": "yyyyyyyy",
+        "principalId": "unknown",
         "policyDocument": {
             "Version": "2012-10-17",
             "Statement": [

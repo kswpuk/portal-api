@@ -373,3 +373,53 @@ module "members_id_photo_PUT" {
     PHOTO_BUCKET_NAME = aws_s3_bucket.member_photos_bucket.id
   }
 }
+
+# /members/{id}/role
+
+module "members_id_role" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members_id.resource_id
+  path_part   = "role"
+}
+
+module "members_id_role_PATCH" {
+  source = "./api_method_dynamodb"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_id_role.resource_path
+
+  http_method   = "PATCH"
+
+  prefix = var.prefix
+  name = "members_id_role"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action = "UpdateItem"
+  dynamodb_table_arn = aws_dynamodb_table.members_table.arn
+
+  
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.members_table.name}",
+  "Key": {
+    "membershipNumber": {
+      "S": "$util.escapeJavaScript($input.params("id"))"
+    }
+  },
+  "UpdateExpression": "SET #k = :v",
+  "ExpressionAttributeNames": {
+    "#k": "role"
+  }
+  "ExpressionAttributeValues": {
+    ":v": {
+      "S": $input.json('$.role') == false )
+    }
+  }
+}
+END
+}

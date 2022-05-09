@@ -128,6 +128,8 @@ def handler(event, context):
       if diff < 5:
         weightings["attended_5yr"] += 1
 
+  # TODO: Attended oversubscribed event in last X
+
   if "droppedout_6mo" in rules or "droppedout_1yr" in rules or "droppedout_2yr" in rules or "droppedout_3yr" in rules:
     weightings["droppedout_6mo"] = 0
     weightings["droppedout_1yr"] = 0
