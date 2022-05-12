@@ -49,12 +49,6 @@ def handler(event, context):
   validationErrors = []
   series = json.loads(event['body'])
 
-  if len(eventSeriesId) > 20:
-    validationErrors.append("Event series ID cannot be longer than 20 characters")
-  
-  if not re.match("^[a-z][-a-z0-9]{,19}$", eventSeriesId):
-    validationErrors.append("Event series ID must start with a letter, and can only contain lower case characters, numbers and hyphens")
-
   name = str(series.get("name", "")).strip()
   if name == "":
     validationErrors.append("Event name cannot be empty")

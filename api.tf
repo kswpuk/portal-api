@@ -40,7 +40,7 @@ resource "aws_api_gateway_deployment" "portal" {
 
   # FIXME: Doesn't trigger new deployments on change
   triggers = {
-    modules = sha1(join("", [
+    modules = sha1(join("#", [
       jsonencode(module.members_GET),
       jsonencode(module.members_id_GET),
       jsonencode(module.members_id_DELETE),

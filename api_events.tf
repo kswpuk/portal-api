@@ -58,7 +58,7 @@ module "events_series" {
 }
 
 module "events_series_GET" {
-  source = "./api_method_dynamodb"
+  source = "./api_method_lambda"
   depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
@@ -68,19 +68,26 @@ module "events_series_GET" {
 
   prefix = var.prefix
   name = "events_series"
+  description = "List event series"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  dynamodb_action = "Scan"
-  dynamodb_table_arn = aws_dynamodb_table.event_series_table.arn
+  lambda_path = "${path.module}/lambda/api/events/_series/GET"
 
-  request_template = <<END
-{
-  "TableName": "${aws_dynamodb_table.event_series_table.name}"
-}
-END
-
-  response_template = local.dynamodb_to_array_vtl
+  lambda_policy = {
+    dynamodb = {
+      actions = [ "dynamodb:Scan" ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn,
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
+  }
 }
 
 # /events/{seriesId}
@@ -145,10 +152,16 @@ module "events_seriesId_DELETE" {
 
   lambda_policy = {
     dynamodb_get = {
+      actions = [ "dynamodb:GetItem" ]
+      resources = [
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+
+    dynamodb_query = {
       actions = [ "dynamodb:Query" ]
       resources = [
-        aws_dynamodb_table.event_instance_table.arn,
-        aws_dynamodb_table.event_series_table.arn
+        aws_dynamodb_table.event_instance_table.arn
       ]
     }
 
