@@ -10,6 +10,7 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 ACCOUNT_DELETED_TEMPLATE = os.getenv('ACCOUNT_DELETED_TEMPLATE')
 DELETED_SOON_TEMPLATE = os.getenv('DELETED_SOON_TEMPLATE')
+MEMBERS_EMAIL = os.getenv('MEMBERS_EMAIL')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 STATUS_INDEX_NAME = os.getenv('STATUS_INDEX_NAME')
 TABLE_NAME = os.getenv('TABLE_NAME')
@@ -18,6 +19,7 @@ GRACE_PERIOD_DAYS = 730 # 2 years
 
 logger.info(f"ACCOUNT_DELETED_TEMPLATE = {ACCOUNT_DELETED_TEMPLATE}")
 logger.info(f"DELETED_SOON_TEMPLATE = {DELETED_SOON_TEMPLATE}")
+logger.info(f"MEMBERS_EMAIL = {MEMBERS_EMAIL}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"STATUS_INDEX_NAME = {STATUS_INDEX_NAME}")
 logger.info(f"TABLE_NAME = {TABLE_NAME}")
@@ -107,7 +109,7 @@ def handler(event, context):
           ]
         },
         ReplyToAddresses=[
-            '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+          MEMBERS_EMAIL
         ],
         ReturnPath='bounces@qswp.org.uk',
         Template=ACCOUNT_DELETED_TEMPLATE,
@@ -153,7 +155,7 @@ def reminders(expiredDate, table):
           ]
         },
         ReplyToAddresses=[
-            '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+          MEMBERS_EMAIL
         ],
         ReturnPath='bounces@qswp.org.uk',
         Template=DELETED_SOON_TEMPLATE,

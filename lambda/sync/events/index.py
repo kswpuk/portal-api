@@ -10,6 +10,7 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 ALLOCATIONS_TABLE = os.getenv('ALLOCATIONS_TABLE')
 EVENT_ADDED_TEMPLATE = os.getenv('EVENT_ADDED_TEMPLATE')
 EVENT_SERIES_TABLE = os.getenv('EVENT_SERIES_TABLE')
+EVENTS_EMAIL = os.getenv('EVENTS_EMAIL')
 MEMBERS_STATUS_INDEX = os.getenv('MEMBERS_STATUS_INDEX')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
@@ -17,6 +18,8 @@ PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 logger.info(f"ALLOCATIONS_TABLE = {ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_ADDED_TEMPLATE = {EVENT_ADDED_TEMPLATE}")
 logger.info(f"EVENT_SERIES_TABLE = {EVENT_SERIES_TABLE}")
+logger.info(f"EVENTS_EMAIL = {EVENTS_EMAIL}")
+
 logger.info(f"MEMBERS_STATUS_INDEX = {MEMBERS_STATUS_INDEX}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
@@ -84,7 +87,7 @@ def new_event(eventSeriesId, eventInstance):
           ]
         },
         ReplyToAddresses=[
-            '"QSWP Event Coordinator" <events@qswp.org.uk>',
+          EVENTS_EMAIL
         ],
         ReturnPath='bounces@qswp.org.uk',
         Template=EVENT_ADDED_TEMPLATE,

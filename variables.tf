@@ -26,3 +26,18 @@ variable "domain" {
   type = string
   default = "qswp.org.uk"
 }
+
+variable "events_email" {
+  type = string
+  default = "\"QSWP Events Coordinator\" <events@qswp.org.uk>"
+}
+
+variable "members_email" {
+  type = string
+  default = "\"QSWP Membership Coordinator\" <members@qswp.org.uk>"
+}
+
+variable "money_email" {
+  type = string
+  default = "\"QSWP Treasurer\" <money@qswp.org.uk>"
+}

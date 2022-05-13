@@ -9,12 +9,14 @@ logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 EXPIRES_SOON_TEMPLATE = os.getenv('EXPIRES_SOON_TEMPLATE')
+MEMBERS_EMAIL = os.getenv('MEMBERS_EMAIL')
 MEMBERSHIP_EXPIRED_TEMPLATE = os.getenv('MEMBERSHIP_EXPIRED_TEMPLATE')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 STATUS_INDEX_NAME = os.getenv('STATUS_INDEX_NAME')
 TABLE_NAME = os.getenv('TABLE_NAME')
 
 logger.info(f"EXPIRES_SOON_TEMPLATE = {EXPIRES_SOON_TEMPLATE}")
+logger.info(f"MEMBERS_EMAIL = {MEMBERS_EMAIL}")
 logger.info(f"MEMBERSHIP_EXPIRED_TEMPLATE = {MEMBERSHIP_EXPIRED_TEMPLATE}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"STATUS_INDEX_NAME = {STATUS_INDEX_NAME}")
@@ -63,7 +65,7 @@ def handler(event, context):
           ]
         },
         ReplyToAddresses=[
-            '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+          MEMBERS_EMAIL
         ],
         ReturnPath='bounces@qswp.org.uk',
         Template=EXPIRES_SOON_TEMPLATE,
@@ -129,7 +131,7 @@ def handler(event, context):
           ]
         },
         ReplyToAddresses=[
-            '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+            MEMBERS_EMAIL
         ],
         ReturnPath='bounces@qswp.org.uk',
         Template=MEMBERSHIP_EXPIRED_TEMPLATE,

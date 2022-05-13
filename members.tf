@@ -108,6 +108,7 @@ module "expire_membership" {
 
   environment_variables = {
     EXPIRES_SOON_TEMPLATE = aws_ses_template.membership_expires_soon.name
+    MEMBERS_EMAIL = var.members_email
     MEMBERSHIP_EXPIRED_TEMPLATE = aws_ses_template.membership_expired.name
     PORTAL_DOMAIN = aws_route53_record.portal.fqdn
     STATUS_INDEX_NAME = "${var.prefix}-membership_status"
@@ -183,6 +184,7 @@ module "delete_accounts" {
     DELETED_SOON_TEMPLATE = aws_ses_template.account_deleted_soon.name
     ACCOUNT_DELETED_TEMPLATE = aws_ses_template.account_deleted.name
     PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+    MEMBERS_EMAIL = var.members_email
   }
 }
 
@@ -307,6 +309,7 @@ module "sync_members" {
     MAILCHIMP_LIST_ID = var.mailchimp_list_id
     MAILCHIMP_SERVER_PREFIX = var.mailchimp_server_prefix
     PHOTO_BUCKET_NAME = aws_s3_bucket.member_photos_bucket.id
+    MEMBERS_EMAIL = var.members_email
     PORTAL_DOMAIN = aws_route53_record.portal.fqdn
     USER_POOL = aws_cognito_user_pool.portal.id
 

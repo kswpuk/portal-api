@@ -9,11 +9,13 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 APPLICATION_RECEIVED_TEMPLATE = os.getenv('APPLICATION_RECEIVED_TEMPLATE')
 EVIDENCE_BUCKET_NAME = os.getenv('EVIDENCE_BUCKET_NAME')
+MEMBERS_EMAIL = os.getenv('MEMBERS_EMAIL')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 REFERENCES_TABLE = os.getenv('REFERENCES_TABLE')
 
 logger.info(f"APPLICATION_RECEIVED_TEMPLATE = {APPLICATION_RECEIVED_TEMPLATE}")
 logger.info(f"EVIDENCE_BUCKET_NAME = {EVIDENCE_BUCKET_NAME}")
+logger.info(f"MEMBERS_EMAIL = {MEMBERS_EMAIL}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"REFERENCES_TABLE = {REFERENCES_TABLE}")
 
@@ -57,11 +59,11 @@ def application_received(application):
           '"'+name+'" <'+email+'>',
         ],
         'CcAddresses': [
-          '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+          MEMBERS_EMAIL
         ]
       },
       ReplyToAddresses=[
-          '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+        MEMBERS_EMAIL
       ],
       ReturnPath='bounces@qswp.org.uk',
       Template=APPLICATION_RECEIVED_TEMPLATE,

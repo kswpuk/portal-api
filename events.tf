@@ -70,6 +70,12 @@ resource "aws_ses_template" "event_allocation" {
   html    = file("${path.module}/emails/event_allocation.html")
 }
 
+resource "aws_ses_template" "event_allocation_reminder" {
+  name    = "${var.prefix}-event_allocation_reminder"
+  subject = "Event Allocation Reminder"
+  html    = file("${path.module}/emails/event_allocation_reminder.html")
+}
+
 # Lambda - New Event Notification, Remove allocations on Deleted Event
 module "sync_events" {
   source = "terraform-aws-modules/lambda/aws"
@@ -153,6 +159,7 @@ module "sync_events" {
     ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.name
     EVENT_ADDED_TEMPLATE = aws_ses_template.event_added.name
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL = var.events_email
     MEMBERS_STATUS_INDEX = "${var.prefix}-membership_status"
     MEMBERS_TABLE = aws_dynamodb_table.members_table.name
     PORTAL_DOMAIN = aws_route53_record.portal.fqdn
@@ -236,6 +243,7 @@ module "sync_allocations" {
   environment_variables = {
     EVENT_ALLOCATION_TEMPLATE = aws_ses_template.event_allocation.name
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL = var.events_email
     MEMBERS_TABLE = aws_dynamodb_table.members_table.name
   }
 }
@@ -244,4 +252,81 @@ resource "aws_lambda_event_source_mapping" "sync_allocations" {
   event_source_arn  = aws_dynamodb_table.event_allocation_table.stream_arn
   function_name     = module.sync_allocations.lambda_function_arn
   starting_position = "LATEST"
+}
+
+# Lambda - Allocation Reminder
+
+module "event_allocation_reminder" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  source_path = [
+    {
+      path = "${path.module}/lambda/cron/event_allocation_reminder"
+      pip_requirements = false
+    }
+  ]
+
+  function_name = "${var.prefix}-event_allocation_reminder-lambda"
+  description = "Event allocation reminder"
+  handler = "index.handler"
+  runtime = "python3.9"
+
+  attach_cloudwatch_logs_policy = true
+
+  attach_policy_statements = true
+  policy_statements = {
+    dynamodb_get = {
+      actions = [
+        "dynamodb:GetItem",
+      ]
+      resources = [ 
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+
+    dynamodb_scan = {
+      actions = [
+        "dynamodb:Scan",
+      ]
+      resources = [ 
+        aws_dynamodb_table.event_instance_table.arn
+      ]
+    }
+
+    ses = {
+      actions = [
+        "ses:SendTemplatedEmail"
+      ]
+      resources = [
+        aws_ses_template.event_allocation_reminder.arn,
+        data.aws_ses_domain_identity.qswp.arn
+      ]
+    }
+  }
+
+  role_name = "${var.prefix}-event_allocation_reminder-role"
+
+  publish = true
+  allowed_triggers = {
+    eventbridge = {
+      principal  = "events.amazonaws.com"
+      source_arn = aws_cloudwatch_event_rule.daily_0700.arn
+    }
+  }
+
+  timeout = 300
+  memory_size = 512
+
+  environment_variables = {
+    ALLOCATION_REMINDER_TEMPLATE = aws_ses_template.event_allocation_reminder.name
+    EVENT_INSTANCE_TABLE =  aws_dynamodb_table.event_instance_table.name
+    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL = var.events_email
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+  }
+}
+
+resource "aws_cloudwatch_event_target" "event_allocation_reminder" {
+    rule = aws_cloudwatch_event_rule.daily_0700.name
+    arn = module.event_allocation_reminder.lambda_function_arn
 }

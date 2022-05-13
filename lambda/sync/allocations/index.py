@@ -8,10 +8,12 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 EVENT_ALLOCATION_TEMPLATE = os.getenv('EVENT_ALLOCATION_TEMPLATE')
 EVENT_SERIES_TABLE = os.getenv('EVENT_SERIES_TABLE')
+EVENTS_EMAIL = os.getenv('EVENTS_EMAIL')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
 
 logger.info(f"EVENT_ALLOCATION_TEMPLATE = {EVENT_ALLOCATION_TEMPLATE}")
 logger.info(f"EVENT_SERIES_TABLE = {EVENT_SERIES_TABLE}")
+logger.info(f"EVENTS_EMAIL = {EVENTS_EMAIL}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
 
 dynamodb = boto3.resource('dynamodb')
@@ -109,7 +111,7 @@ def updated_allocation(combinedEventId, membershipNumber, allocation):
         ]
       },
       ReplyToAddresses=[
-          '"QSWP Event Coordinator" <events@qswp.org.uk>',
+        EVENTS_EMAIL
       ],
       ReturnPath='bounces@qswp.org.uk',
       Template=EVENT_ALLOCATION_TEMPLATE,

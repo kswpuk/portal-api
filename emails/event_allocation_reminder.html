@@ -1,0 +1,25 @@
+{{#if closed}}
+<p>
+  Registration for the following events closed yesterday, and need allocating:
+</p>
+
+<ul>
+  {{#each closed}}
+    <li><a href="https://{{portalDomain}}/events/{{eventSeriesId}}/{{eventId}}">{{name}} ({{location}})</a></li>
+  {{/each}}
+</ul>
+{{/if}}
+
+{{#if finished}}
+<p>
+  The following events finished yesterday, and need their attendance updating:
+</p>
+
+<ul>
+  {{#each finished}}
+    <li><a href="https://{{portalDomain}}/events/{{eventSeriesId}}/{{eventId}}">{{name}} ({{location}})</a></li>
+  {{/each}}
+</ul>
+{{/if}}
+
+<p>Please action these as soon as possible, as they may affect other allocations and processes.</p>

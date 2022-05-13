@@ -8,11 +8,13 @@ logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 APPLICATION_TABLE = os.getenv('APPLICATION_TABLE')
+MEMBERS_EMAIL = os.getenv('MEMBERS_EMAIL')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 REFERENCE_REQUEST_TEMPLATE = os.getenv('REFERENCE_REQUEST_TEMPLATE')
 REFERENCE_RECEIVED_TEMPLATE = os.getenv('REFERENCE_RECEIVED_TEMPLATE')
 
 logger.info(f"APPLICATION_TABLE = {APPLICATION_TABLE}")
+logger.info(f"MEMBERS_EMAIL = {MEMBERS_EMAIL}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"REFERENCE_REQUEST_TEMPLATE = {REFERENCE_REQUEST_TEMPLATE}")
 logger.info(f"REFERENCE_RECEIVED_TEMPLATE = {REFERENCE_RECEIVED_TEMPLATE}")
@@ -75,11 +77,11 @@ def reference_completed(reference, application):
           '"'+referenceName+'" <'+referenceEmail+'>',
         ],
         'CcAddresses': [
-          '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+          MEMBERS_EMAIL
         ]
       },
       ReplyToAddresses=[
-          '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+        MEMBERS_EMAIL
       ],
       ReturnPath='bounces@qswp.org.uk',
       Template=REFERENCE_RECEIVED_TEMPLATE,
@@ -113,7 +115,7 @@ def referee_added(reference, application):
         ]
       },
       ReplyToAddresses=[
-          '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+        MEMBERS_EMAIL
       ],
       ReturnPath='bounces@qswp.org.uk',
       Template=REFERENCE_REQUEST_TEMPLATE,

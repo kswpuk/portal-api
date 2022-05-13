@@ -13,6 +13,7 @@ API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 APPLICATION_ACCEPTED_TEMPLATE = os.getenv('APPLICATION_ACCEPTED_TEMPLATE')
 MAILCHIMP_LIST_ID = os.getenv('MAILCHIMP_LIST_ID')
 MAILCHIMP_SERVER_PREFIX = os.getenv('MAILCHIMP_SERVER_PREFIX')
+MEMBERS_EMAIL = os.getenv('MEMBERS_EMAIL')
 PHOTO_BUCKET_NAME = os.getenv('PHOTO_BUCKET_NAME')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
 USER_POOL = os.getenv('USER_POOL')
@@ -30,6 +31,7 @@ logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"APPLICATION_ACCEPTED_TEMPLATE = {APPLICATION_ACCEPTED_TEMPLATE}")
 logger.info(f"MAILCHIMP_LIST_ID = {MAILCHIMP_LIST_ID}")
 logger.info(f"MAILCHIMP_SERVER_PREFIX = {MAILCHIMP_SERVER_PREFIX}")
+logger.info(f"MEMBERS_EMAIL = {MEMBERS_EMAIL}")
 logger.info(f"PHOTO_BUCKET_NAME = {PHOTO_BUCKET_NAME}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
 logger.info(f"USER_POOL = {USER_POOL}")
@@ -100,7 +102,7 @@ def send_welcome_email(membershipNumber, newImage):
         ]
       },
       ReplyToAddresses=[
-          '"QSWP Membership Coordinator" <members@qswp.org.uk>',
+        MEMBERS_EMAIL
       ],
       ReturnPath='bounces@qswp.org.uk',
       Template=APPLICATION_ACCEPTED_TEMPLATE,
