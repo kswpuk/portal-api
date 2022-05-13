@@ -53,7 +53,7 @@ def handler(event, context):
       grouped_instances[instance["eventSeriesId"]].append(instance)
     
     for s in series:
-      s["instances"] = sorted(grouped_instances[s["eventSeriesId"]], key=lambda d: (d['startDate']))
+      s["instances"] = sorted(grouped_instances[s["eventSeriesId"]], key=lambda d: (d['startDate']), reverse=True)
   
   return {
     "statusCode": 200,
@@ -88,17 +88,19 @@ def scan_event_instances():
   while True:
     if last_evaluated_key:
       response = event_instance_table.scan(
-        ProjectionExpression="eventSeriesId,eventId,endDate,#l,startDate",
+        ProjectionExpression="eventSeriesId,eventId,endDate,#l,locationType,postcode,startDate,#u",
         ExpressionAttributeNames={
-          "#l": "location"
+          "#l": "location",
+          "#u": "url"
         },
         ExclusiveStartKey=last_evaluated_key
       )
     else: 
       response = event_instance_table.scan(
-        ProjectionExpression="eventSeriesId,eventId,endDate,#l,startDate",
+        ProjectionExpression="eventSeriesId,eventId,endDate,#l,locationType,postcode,startDate,#u",
         ExpressionAttributeNames={
-          "#l": "location"
+          "#l": "location",
+          "#u": "url"
         }
       )
 
