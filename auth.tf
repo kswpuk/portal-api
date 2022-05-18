@@ -57,6 +57,8 @@ resource "aws_cognito_user_pool" "portal" {
     require_uppercase = true
     require_numbers = false
     require_symbols = false
+
+    temporary_password_validity_days = 365
   }
 
   email_configuration {
