@@ -225,6 +225,12 @@ resource "aws_ses_template" "account_deleted" {
   html    = file("${path.module}/emails/account_deleted.html")
 }
 
+resource "aws_ses_template" "membership_summary" {
+  name    = "${var.prefix}-membership_summary"
+  subject = "Weekly Membership Summary"
+  html    = file("${path.module}/emails/membership_summary.html")
+}
+
 # Lambda - Sync changes to Cognito and handle updates to members
 
 module "sync_members" {
@@ -328,4 +334,85 @@ resource "aws_lambda_event_source_mapping" "sync_members" {
   event_source_arn  = aws_dynamodb_table.members_table.stream_arn
   function_name     = module.sync_members.lambda_function_arn
   starting_position = "LATEST"
+}
+
+# Lambda - Membership Summary
+
+module "membership_summary" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  source_path = [
+    {
+      path = "${path.module}/lambda/cron/membership_summary"
+      pip_requirements = false
+    }
+  ]
+
+  function_name = "${var.prefix}-membership_summary-lambda"
+  description = "Membership Summary"
+  handler = "index.handler"
+  runtime = "python3.9"
+
+  attach_cloudwatch_logs_policy = true
+
+  attach_policy_statements = true
+  policy_statements = {
+    dynamodb_query = {
+      actions = [
+        "dynamodb:Query",
+      ]
+      resources = [ 
+        aws_dynamodb_table.members_table.arn,
+        "${aws_dynamodb_table.members_table.arn}/index/*"
+      ]
+    }
+
+    dynamodb_scan = {
+      actions = [
+        "dynamodb:Scan",
+      ]
+      resources = [ 
+        aws_dynamodb_table.applications_table.arn,
+        aws_dynamodb_table.references_table.arn
+      ]
+    }
+
+    ses = {
+      actions = [
+        "ses:SendTemplatedEmail"
+      ]
+      resources = [
+        aws_ses_template.membership_summary.arn,
+        data.aws_ses_domain_identity.qswp.arn
+      ]
+    }
+  }
+
+  role_name = "${var.prefix}-membership_summary-role"
+
+  publish = true
+  allowed_triggers = {
+    eventbridge = {
+      principal  = "events.amazonaws.com"
+      source_arn = aws_cloudwatch_event_rule.weekly.arn
+    }
+  }
+
+  timeout = 300
+  memory_size = 512
+
+  environment_variables = {
+    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.name
+    MEMBERS_EMAIL = var.members_email
+    MEMBERSHIP_SUMMARY_TEMPLATE = aws_ses_template.membership_summary.name
+    MEMBERSHIP_TABLE = aws_dynamodb_table.members_table.name
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+    REFERENCES_TABLE = aws_dynamodb_table.references_table.name
+    STATUS_INDEX_NAME = "${var.prefix}-membership_status"
+  }
+}
+
+resource "aws_cloudwatch_event_target" "membership_summary" {
+  rule = aws_cloudwatch_event_rule.weekly.name
+  arn = module.membership_summary.lambda_function_arn
 }

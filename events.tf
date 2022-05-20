@@ -327,6 +327,6 @@ module "event_allocation_reminder" {
 }
 
 resource "aws_cloudwatch_event_target" "event_allocation_reminder" {
-    rule = aws_cloudwatch_event_rule.daily_0700.name
-    arn = module.event_allocation_reminder.lambda_function_arn
+  rule = aws_cloudwatch_event_rule.daily_0700.name
+  arn = module.event_allocation_reminder.lambda_function_arn
 }

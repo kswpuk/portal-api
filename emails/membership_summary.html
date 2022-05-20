@@ -1,0 +1,49 @@
+{{#if renewals}}
+<p>
+  The following members renewed their membership in the past week ({{renewalsStart}} to {{renewalsEnd}}), and may need their role adding or updating on Compass:
+</p>
+
+<ul>
+  {{#each renewals}}
+    <li><a href="https://{{portalDomain}}/members/{{membershipNumber}}/view">{{firstName}} {{surname}} ({{membershipNumber}})</a></li>
+  {{/each}}
+</ul>
+{{/if}}
+
+{{#if expired}}
+<p>
+  The following members had their membership two months ago ({{expiredStart}} to {{expiredEnd}}), and may need their role removing from Compass:
+</p>
+
+<ul>
+  {{#each expired}}
+    <li><a href="https://{{portalDomain}}/members/{{membershipNumber}}/view">{{firstName}} {{surname}} ({{membershipNumber}})</a></li>
+  {{/each}}
+</ul>
+{{/if}}
+
+{{#if applications}}
+<p>
+  The following applications were received in the last week ({{applicationsStart}} to {{applicationsEnd}}), and may need reviewing:
+</p>
+
+<ul>
+  {{#each applications}}
+    <li><a href="https://{{portalDomain}}/applications/{{membershipNumber}}/view">{{firstName}} {{surname}} ({{membershipNumber}})</a></li>
+  {{/each}}
+</ul>
+{{/if}}
+
+{{#if references}}
+<p>
+  The folloowing references were received in the last week ({{applicationsStart}} to {{applicationsEnd}}), and may need reviewing:
+</p>
+
+<ul>
+  {{#each references}}
+    <li><a href="https://{{portalDomain}}/applications/{{membershipNumber}}/view">{{referenceName}} for member {{membershipNumber}}</a></li>
+  {{/each}}
+</ul>
+{{/if}}
+
+<p>Please action the above items as soon as possible.</p>

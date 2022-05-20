@@ -45,9 +45,21 @@ END
 # Cron Timings
 
 resource "aws_cloudwatch_event_rule" "daily_0700" {
-    name = "${var.prefix}-daily_0700"
-    description = "Fires daily at 0700"
-    schedule_expression = "cron(0 7 * * ? *)"
+  name = "${var.prefix}-daily_0700"
+  description = "Fires daily at 0700"
+  schedule_expression = "cron(0 7 * * ? *)"
+}
+
+resource "aws_cloudwatch_event_rule" "weekly" {
+  name = "${var.prefix}-weekly"
+  description = "Fires on Fridays at 0700"
+  schedule_expression = "cron(0 7 ? * FRI *)"
+}
+
+resource "aws_cloudwatch_event_rule" "monthly" {
+  name = "${var.prefix}-monthly"
+  description = "Fires on first of month at 0900"
+  schedule_expression = "cron(0 9 1 * ? *)"
 }
 
 # Data
