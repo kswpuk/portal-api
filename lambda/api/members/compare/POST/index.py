@@ -1,5 +1,6 @@
 
 import boto3
+import datetime
 import json
 import logging
 import os
@@ -54,6 +55,7 @@ def handler(event, context):
     combined_members.add(int(m["membershipNumber"]))
 
   # Calculate response
+  grace_period = (datetime.date.today() - datetime.timedelta(days=60)).isoformat()
   comparison_result = []
   for m in combined_members:
     compass = (m in compass_members)
@@ -70,12 +72,15 @@ def handler(event, context):
       name = fname + " " + pm['surname']
 
       portal_active = (portal_members_map[m]['status'] == "ACTIVE")
+      portal_grace = (portal_members_map[m]['membershipExpires'] > grace_period)
       
       if portal_active == compass:
         action = "NONE"
       elif portal_active and not compass:
         action = "ADD_TO_COMPASS"
-      elif not portal_active:
+      elif portal_grace:
+        action = "NONE_GRACE"
+      else:
         action = "REMOVE_FROM_COMPASS"
     else:
       action = "REMOVE_FROM_COMPASS"
@@ -100,7 +105,7 @@ def scan_members(**kwargs):
     if last_evaluated_key:
       response = members_table.scan(
         ExclusiveStartKey=last_evaluated_key,
-        ProjectionExpression="membershipNumber,firstName,preferredName,surname,#s",
+        ProjectionExpression="membershipNumber,firstName,preferredName,surname,#s,membershipExpires",
         ExpressionAttributeNames={
           "#s": "status"
         },
@@ -108,7 +113,7 @@ def scan_members(**kwargs):
       )
     else: 
       response = members_table.scan(
-        ProjectionExpression="membershipNumber,firstName,preferredName,surname,#s",
+        ProjectionExpression="membershipNumber,firstName,preferredName,surname,#s,membershipExpires",
         ExpressionAttributeNames={
           "#s": "status"
         },

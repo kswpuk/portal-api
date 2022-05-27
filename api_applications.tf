@@ -10,7 +10,7 @@ module "applications" {
 }
 
 module "applications_GET" {
-  source = "./api_method_dynamodb"
+  source = "./api_method_lambda"
   depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
@@ -20,19 +20,21 @@ module "applications_GET" {
 
   prefix = var.prefix
   name = "applications"
+  description = "List applications"
+
+  lambda_path = "${path.module}/lambda/api/applications/GET"
+
+  lambda_policy = {
+    dynamodb = {
+      actions = [ "dynamodb:Scan" ]
+      resources = [ aws_dynamodb_table.applications_table.arn, aws_dynamodb_table.references_table.arn ]
+    }
+  }
   
-  authorizer_id = aws_api_gateway_authorizer.portal.id
-
-  dynamodb_action = "Scan"
-  dynamodb_table_arn = aws_dynamodb_table.applications_table.arn
-
-  request_template = <<END
-{
-  "TableName": "${aws_dynamodb_table.applications_table.name}"
-}
-END
-
-  response_template = local.dynamodb_to_array_vtl
+  lambda_env = {
+    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.id
+    REFERENCES_TABLE = aws_dynamodb_table.references_table.id
+  }
 }
 
 # /applications/{id}

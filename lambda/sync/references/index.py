@@ -38,6 +38,11 @@ def handler(event, context):
 
     if record['eventName'] == "INSERT" or record['eventName'] == "MODIFY":
       r = record['dynamodb']['NewImage']
+      o = record['dynamodb']['OldImage']
+
+      # If accepted has changed, assume that's the only change and don't send updates
+      if r.get('accepted') != o.get('accepted') and 'accepted' in r:
+        continue
       
       logger.debug("Getting applicant information")
       try:
@@ -56,7 +61,7 @@ def handler(event, context):
         return
 
       a = applications['Item']
-      
+
       if 'submittedAt' in r and r['submittedAt']:
         reference_completed(r, a)
       else:
