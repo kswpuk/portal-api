@@ -38,10 +38,9 @@ def handler(event, context):
 
     if record['eventName'] == "INSERT" or record['eventName'] == "MODIFY":
       r = record['dynamodb']['NewImage']
-      o = record['dynamodb']['OldImage']
 
       # If accepted has changed, assume that's the only change and don't send updates
-      if r.get('accepted') != o.get('accepted') and 'accepted' in r:
+      if 'OldImage' in record['dynamodb'] and 'accepted' in r and r['accepted'] != record['dynamodb']['OldImage'].get('accepted') :
         continue
       
       logger.debug("Getting applicant information")

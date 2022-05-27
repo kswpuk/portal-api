@@ -56,7 +56,7 @@ def handler(event, context):
     }
   
   # Check if we already have a reference from this e-mail for this member
-  email = str(reference.get("email")).strip()
+  email = str(reference.get("email")).strip().lower()
   references_response = references_table.get_item(
     Key={
       "membershipNumber": membershipNumber,

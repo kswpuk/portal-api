@@ -115,7 +115,7 @@ def handler(event, context):
     if datetime.datetime.now().year - dob.year < 18:
       validationErrors.append("You must be at least 18 to join the QSWP")
 
-  email = str(application.get("email")).strip()
+  email = str(application.get("email")).strip().lower()
   if not email:
     validationErrors.append("E-mail address cannot be empty")
   elif not validate_email(email, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
@@ -159,7 +159,7 @@ def handler(event, context):
   if not srName:
     validationErrors.append("Scout reference name cannot be empty")
   
-  srEmail = str(application.get("srEmail")).strip()
+  srEmail = str(application.get("srEmail")).strip().lower()
   if not srEmail:
     validationErrors.append("Scout reference e-mail address cannot be empty")
   elif not validate_email(srEmail, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
@@ -169,7 +169,7 @@ def handler(event, context):
   if not nsrName:
     validationErrors.append("Non-Scout reference name cannot be empty")
   
-  nsrEmail = str(application.get("nsrEmail")).strip()
+  nsrEmail = str(application.get("nsrEmail")).strip().lower()
   if not nsrEmail:
     validationErrors.append("Non-Scout reference e-mail address cannot be empty")
   elif not validate_email(nsrEmail, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
