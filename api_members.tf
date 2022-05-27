@@ -37,6 +37,46 @@ END
   response_template = local.dynamodb_to_array_vtl
 }
 
+# /members/compare
+
+module "members_compare" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members.resource_id
+  path_part   = "compare"
+}
+
+module "members_compare_POST" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_compare.resource_path
+
+  http_method = "POST"
+
+  prefix = var.prefix
+  name = "members_compare"
+  description = "Compare membership list to Compass"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/members/compare/POST"
+
+  lambda_policy = {
+    dynamodb = {
+      actions = [ "dynamodb:Scan" ]
+      resources = [ aws_dynamodb_table.members_table.arn ]
+    }
+  }
+  
+  lambda_env = {
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.name
+  }
+}
+
 # /members/{id}
 
 module "members_id" {
