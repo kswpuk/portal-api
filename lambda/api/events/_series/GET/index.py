@@ -31,9 +31,13 @@ event_instance_table = dynamodb.Table(EVENT_INSTANCE_TABLE)
 
 def handler(event, context):
   detailed = 'queryStringParameters' in event and event['queryStringParameters'] is not None and 'detailed' in event['queryStringParameters']
+  series_type = None if event.get('queryStringParameters') is None else event.get('queryStringParameters', {}).get('type', None)
 
   try:
-    series = scan_event_series()
+    if series_type is not None:
+      series = scan_event_series(FilterExpression=Attr("type").eq(series_type))
+    else:
+      series = scan_event_series()
   except Exception as e:
     logger.error(f"Unable to get event series from {EVENT_SERIES_TABLE}: {str(e)}")
     raise e
@@ -61,17 +65,18 @@ def handler(event, context):
     "body": json.dumps(series)
   }
 
-def scan_event_series():
+def scan_event_series(**kwargs):
   results = []
   last_evaluated_key = None
 
   while True:
     if last_evaluated_key:
       response = event_series_table.scan(
-        ExclusiveStartKey=last_evaluated_key
+        ExclusiveStartKey=last_evaluated_key,
+        **kwargs
       )
     else: 
-      response = event_series_table.scan()
+      response = event_series_table.scan(**kwargs)
 
     last_evaluated_key = response.get('LastEvaluatedKey')    
     results.extend(response['Items'])
