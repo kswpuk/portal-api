@@ -10,31 +10,33 @@ module "members" {
 }
 
 module "members_GET" {
-  source = "./api_method_dynamodb"
+  source = "./api_method_lambda"
   depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
   path = module.members.resource_path
 
-  http_method   = "GET"
+  http_method = "GET"
 
   prefix = var.prefix
   name = "members"
-  
+  description = "Get membership list"
+
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  dynamodb_action = "Scan"
-  dynamodb_table_arn = aws_dynamodb_table.members_table.arn
+  lambda_path = "${path.module}/lambda/api/members/GET"
 
-  request_template = <<END
-{
-  "TableName": "${aws_dynamodb_table.members_table.name}",
-  "ProjectionExpression": "membershipNumber,firstName,preferredName,surname,#r,#s",
-  "ExpressionAttributeNames": {"#r": "role", "#s": "status"}
-}
-END
-
-  response_template = local.dynamodb_to_array_vtl
+  lambda_policy = {
+    dynamodb = {
+      actions = [ "dynamodb:Scan" ]
+      resources = [ aws_dynamodb_table.members_table.arn ]
+    }
+  }
+  
+  lambda_env = {
+    COMMITTEE_GROUP = aws_cognito_user_group.committee.name
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.name
+  }
 }
 
 # /members/compare
