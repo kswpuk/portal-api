@@ -146,7 +146,11 @@ def reminders(expiredDate, table):
   for reminderMember in reminderMembers['Items']:   
     # Send e-mail to members who will expire soon
     try:
-      name = reminderMember.get('preferredName', reminderMember['firstName']) + " " + reminderMember['surname']
+      firstName = reminderMember.get('preferredName', '').strip()
+      if firstName == '':
+        firstName = reminderMember['firstName']
+
+      name = firstName + " " + reminderMember['surname']
       ses.send_templated_email(
         Source='"QSWP Portal" <portal@qswp.org.uk>',
         Destination={

@@ -54,7 +54,7 @@ module "lambda" {
   allowed_triggers = {
     api_gateway = {
       service    = "apigateway"
-      source_arn = "${data.aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.method.http_method}${var.path}"
+      source_arn = "${data.aws_api_gateway_rest_api.api.execution_arn}/*/${aws_api_gateway_method.method.http_method == "ANY" ? "*" : aws_api_gateway_method.method.http_method}${var.path}"
     }
   }
 

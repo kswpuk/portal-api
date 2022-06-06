@@ -79,7 +79,11 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.events_seriesId_eventId_allocate_id_DELETE),
       jsonencode(module.events_seriesId_eventId_register_id_POST),
 
-      jsonencode(module.payments_membership_session_GET)
+      jsonencode(module.payments_membership_session_GET),
+
+      jsonencode(module.socials_seriesId_eventId_ANY),
+      jsonencode(module.socials_seriesId_eventId_allocate_PUT),
+      jsonencode(module.socials_seriesId_eventId_allocate_id_DELETE)
     ]))
   }
 
@@ -126,7 +130,11 @@ resource "aws_api_gateway_deployment" "portal" {
     module.events_seriesId_eventId_allocate_id_DELETE,
     module.events_seriesId_eventId_register_id_POST,
 
-    module.payments_membership_session_GET
+    module.payments_membership_session_GET,
+
+    module.socials_seriesId_eventId_ANY,
+    module.socials_seriesId_eventId_allocate_PUT,
+    module.socials_seriesId_eventId_allocate_id_DELETE
   ]
 }
 

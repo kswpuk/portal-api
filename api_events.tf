@@ -294,9 +294,8 @@ module "events_seriesId_eventId" {
   path_part   = "{eventId}"
 }
 
-
 module "events_seriesId_eventId_DELETE" {
-  source = "./api_method_dynamodb"
+  source = "./api_method_lambda"
   depends_on = [ aws_api_gateway_rest_api.portal ]
   
   rest_api_name = aws_api_gateway_rest_api.portal.name
@@ -306,25 +305,26 @@ module "events_seriesId_eventId_DELETE" {
 
   prefix = var.prefix
   name = "events_seriesId_eventId"
+  description = "Delete event"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  dynamodb_action = "DeleteItem"
-  dynamodb_table_arn = aws_dynamodb_table.event_instance_table.arn
-  
-  request_template = <<END
-{
-  "TableName": "${aws_dynamodb_table.event_instance_table.name}",
-  "Key": {
-    "eventSeriesId": {
-      "S": "$util.escapeJavaScript($input.params("seriesId"))"
-    },
-    "eventId": {
-      "S": "$util.escapeJavaScript($input.params("eventId"))"
+  lambda_path = "${path.module}/lambda/api/events/{seriesId}/{eventId}/DELETE"
+
+  lambda_policy = {
+    dynamodb_get = {
+      actions = [ 
+        "dynamodb:DeleteItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn
+      ]
     }
   }
-}
-END 
+  
+  lambda_env = {
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+  }
 }
 
 module "events_seriesId_eventId_GET" {
