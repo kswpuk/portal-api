@@ -170,6 +170,32 @@ def handler(event, context):
   except:
     attendanceLimit = None
     validationErrors.append("Attendance limit must be numeric")
+  
+
+  if event.get("weightingCriteria") is None:
+    weightingCriteria = {}
+  elif isinstance(event.get("weightingCriteria"), dict):
+    weightingCriteria = {}
+
+    for k, v in event.get("weightingCriteria").items():
+      if k not in ["under_25", "over_25", "attended", "attended_1yr", "attended_2yr", "attended_3yr", "attended_5yr", "droppedout_6mo", "droppedout_1yr", "droppedout_2yr", "droppedout_3yr", "noshow_6mo", "noshow_1yr", "noshow_2yr", "noshow_3yr", "joined_1yr", "joined_2yr", "joined_3yr", "joined_5yr", "qsa_1yr", "qsa_2yr", "qsa_3yr", "qsa_5yr"]:
+        validationErrors.append(f"Weighting criteria {k} not a supported value")
+        continue
+      
+      try:
+        vi = int(v)
+
+        if vi == 0:
+          # Don't add criteria that are 0
+          continue
+        
+        weightingCriteria[k] = vi
+      except:
+        validationErrors.append(f"Weighting criteria value {v} for {k} must be numeric")
+
+  else:
+    weightingCriteria = None
+    validationErrors.append("Attendance criteria must be an object")
 
   if len(validationErrors) > 0:
     return {
@@ -194,6 +220,7 @@ def handler(event, context):
         "cost": cost,
         "payee": payee,
         "attendanceCriteria": attendanceCriteria,
-        "attendanceLimit": attendanceLimit
+        "attendanceLimit": attendanceLimit,
+        "weightingCriteria": weightingCriteria
       }
     }

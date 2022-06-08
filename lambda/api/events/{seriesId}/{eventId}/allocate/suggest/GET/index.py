@@ -120,7 +120,7 @@ def handler(event, context):
         "body": json.dumps(list(weightings.keys()))
       }
 
-    # Get initial weighintgs
+    # Get initial weightings
     for k, v in rules.items():
       for membership_number in matches:
         weightings[membership_number] += v*matches[membership_number].get(k, 0)
