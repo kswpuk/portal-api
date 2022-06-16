@@ -42,9 +42,21 @@ def handler(event, context):
   try:
     
     if COMMITTEE_GROUP in groups:
-      projectionExpression += ",email"
+      projectionExpression += ",email,dateOfBirth"
 
     members = scan_table(members_table, ProjectionExpression=projectionExpression, ExpressionAttributeNames=expressionAttributeNames)
+
+    if COMMITTEE_GROUP in groups:
+      today = datetime.date.today()
+    
+      for member in members:
+        # Calculate age
+        birthdate = datetime.date.fromisoformat(member['dateOfBirth'])
+        age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+
+        member["age"] = age
+        del member["dateOfBirth"]
+
   except Exception as e:
     logger.error(f"Unable to scan members table: {str(e)}")
     return {
