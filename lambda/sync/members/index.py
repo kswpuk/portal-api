@@ -11,6 +11,7 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 APPLICATION_ACCEPTED_TEMPLATE = os.getenv('APPLICATION_ACCEPTED_TEMPLATE')
+COGNITO_PHONE = (os.getenv('COGNITO_PHONE', 'false').lower() == "true")
 MAILCHIMP_LIST_ID = os.getenv('MAILCHIMP_LIST_ID')
 MAILCHIMP_SERVER_PREFIX = os.getenv('MAILCHIMP_SERVER_PREFIX')
 MEMBERS_EMAIL = os.getenv('MEMBERS_EMAIL')
@@ -29,6 +30,7 @@ STANDARD_GROUP = os.getenv('STANDARD_GROUP')
 
 logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"APPLICATION_ACCEPTED_TEMPLATE = {APPLICATION_ACCEPTED_TEMPLATE}")
+logger.info(f"COGNITO_PHONE = {COGNITO_PHONE}")
 logger.info(f"MAILCHIMP_LIST_ID = {MAILCHIMP_LIST_ID}")
 logger.info(f"MAILCHIMP_SERVER_PREFIX = {MAILCHIMP_SERVER_PREFIX}")
 logger.info(f"MEMBERS_EMAIL = {MEMBERS_EMAIL}")
@@ -123,11 +125,19 @@ def create_user(membershipNumber, newImage):
       'Name': 'email',
       'Value': newImage['email']['S']
     })
+    userAttributes.append({
+      'Name': 'email_verified',
+      'Value': 'true'
+    })
   
-  if 'telephone' in newImage and 'S' in newImage['telephone']:
+  if 'telephone' in newImage and 'S' in newImage['telephone'] and COGNITO_PHONE:
     userAttributes.append({
       'Name': 'phone_number',
       'Value': newImage['telephone']['S']
+    })
+    userAttributes.append({
+      'Name': 'phone_number_verified',
+      'Value': 'true'
     })
 
   try:
@@ -185,15 +195,23 @@ def update_user(membershipNumber, newImage, oldImage):
         'Name': 'email',
         'Value': newEmail
       })
+      cognito_changes.append({
+        'Name': 'email_verified',
+        'Value': 'true'
+      })
       mailchimp_changes['email_address'] = newEmail
       logMessage.append(f"New e-mail: {newEmail}")
 
-  if 'telephone' in newImage and 'S' in newImage['telephone']:
+  if 'telephone' in newImage and 'S' in newImage['telephone'] and COGNITO_PHONE:
     newPhone = newImage['telephone']['S']
     if oldImage.get('telephone', {}).get('S') != newPhone:
       cognito_changes.append({
         'Name': 'phone_number',
         'Value': newPhone
+      })
+      cognito_changes.append({
+        'Name': 'phone_number_verified',
+        'Value': 'true'
       })
       logMessage.append(f"New phone number: {newPhone}")
   
@@ -215,7 +233,6 @@ def update_user(membershipNumber, newImage, oldImage):
   if len(cognito_changes) == 0:
     logger.info("Changes don't require modifications to Cognito")
   else:
-    #TODO: Do we want to set the email and phone number as verified?
     try:
       cognito.admin_update_user_attributes(
         UserPoolId=USER_POOL,

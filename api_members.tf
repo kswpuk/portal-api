@@ -79,6 +79,56 @@ module "members_compare_POST" {
   }
 }
 
+# /members/export
+
+module "members_export" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members.resource_id
+  path_part   = "export"
+}
+
+module "members_export_POST" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_export.resource_path
+
+  http_method = "POST"
+
+  prefix = var.prefix
+  name = "members_export"
+  description = "Export membership list as CSV"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/members/export/POST"
+
+  lambda_policy = {
+    allocations = {
+      actions = [ "dynamodb:Query" ]
+      resources = [ aws_dynamodb_table.event_allocation_table.arn ]
+    }
+
+    members = {
+      actions = [ 
+        "dynamodb:GetItem",
+        "dynamodb:Scan"
+      ]
+      resources = [ aws_dynamodb_table.members_table.arn ]
+    }
+  }
+  
+  lambda_env = {
+    ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.name
+    FIELD_NAMES = "membershipNumber,surname,firstName,preferredName,email,telephone,address,postcode,dateOfBirth,dietaryRequirements,medicalInformation,emergencyContactName,emergencyContactTelephone,nationality,placeOfBirth,joinDate,status,role,membershipExpires,receivedNecker,lastUpdated"
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.name
+  }
+}
+
 # /members/{id}
 
 module "members_id" {

@@ -43,6 +43,7 @@ resource "aws_api_gateway_deployment" "portal" {
     modules = sha1(join(":", [
       jsonencode(module.members_GET),
       jsonencode(module.members_compare_POST),
+      jsonencode(module.members_export_POST),
       jsonencode(module.members_id_GET),
       jsonencode(module.members_id_DELETE),
       jsonencode(module.members_id_PUT),
@@ -94,6 +95,7 @@ resource "aws_api_gateway_deployment" "portal" {
   depends_on = [
     module.members_GET,
     module.members_compare_POST,
+    module.members_export_POST,
     module.members_id_GET,
     module.members_id_DELETE,
     module.members_id_PUT,
