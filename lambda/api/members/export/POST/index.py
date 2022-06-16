@@ -41,6 +41,13 @@ def handler(event, context):
   combinedEventId = body.get('combinedEventId', None)
   members = body.get('members', [])
 
+  try:
+    requestor = event['requestContext']['authorizer']['membershipNumber']
+  except:
+    requestor = "UNKNOWN"
+  
+  logger.info(f"{requestor} requested an export of membership details for event {combinedEventId} and members {members}")
+
   member_information = []
   field_names = FIELD_NAMES.copy()
 
