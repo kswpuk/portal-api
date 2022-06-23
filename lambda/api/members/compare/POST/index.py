@@ -72,7 +72,7 @@ def handler(event, context):
       name = fname + " " + pm['surname']
 
       portal_active = (portal_members_map[m]['status'] == "ACTIVE")
-      portal_grace = (portal_members_map[m]['membershipExpires'] > grace_period)
+      portal_grace = (portal_members_map[m].get('membershipExpires', datetime.date.today().isoformat()) > grace_period)
       
       if portal_active == compass:
         action = "NONE"
