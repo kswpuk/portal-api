@@ -64,6 +64,7 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.applications_id_references_POST),
       jsonencode(module.applications_id_references_email_GET),
       jsonencode(module.applications_id_references_email_accept_PATCH),
+      jsonencode(module.applications_id_status_POST),
 
       jsonencode(module.events_GET),
       jsonencode(module.events_series_GET),
@@ -116,6 +117,7 @@ resource "aws_api_gateway_deployment" "portal" {
     module.applications_id_references_POST,
     module.applications_id_references_email_GET,
     module.applications_id_references_email_accept_PATCH,
+    module.applications_id_status_POST,
 
     module.events_GET,
     module.events_series_GET,

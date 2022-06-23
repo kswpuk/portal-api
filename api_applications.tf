@@ -482,3 +482,79 @@ module "applications_id_references_email_accept_PATCH" {
 }
 END
 }
+
+# /applications/{id}/status
+
+module "applications_id_status" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.applications_id.resource_id
+  path_part   = "status"
+}
+
+module "applications_id_status_POST" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.applications_id_status.resource_path
+
+  http_method   = "POST"
+
+  prefix = var.prefix
+  name = "applications_id_status"
+  description = "Get application status"
+
+  lambda_path = "${path.module}/lambda/api/applications/{id}/status/POST"
+
+  lambda_policy = {
+    dynamodb_applications = {
+      actions = [
+        "dynamodb:GetItem"
+      ]
+      resources = [ 
+        aws_dynamodb_table.applications_table.arn
+      ]
+      condition = {
+        forallvalues_condition = {
+          test = "ForAllValues:StringEquals"
+          variable = "dynamodb:Attributes"
+          values = ["membershipNumber", "dateOfBirth", "submittedAt"]
+        }
+        stringequals_condition = {
+          test = "StringEquals"
+          variable = "dynamodb:Select"
+          values = ["SPECIFIC_ATTRIBUTES"]
+        }
+      }
+    }
+
+    dynamodb_references = {
+      actions = [
+        "dynamodb:Query"
+      ]
+      resources = [
+        aws_dynamodb_table.references_table.arn
+      ]
+      condition = {
+        forallvalues_condition = {
+          test = "ForAllValues:StringEquals"
+          variable = "dynamodb:Attributes"
+          values = ["membershipNumber", "referenceEmail", "accepted", "relationship", "howLong"]
+        }
+        stringequals_condition = {
+          test = "StringEquals"
+          variable = "dynamodb:Select"
+          values = ["SPECIFIC_ATTRIBUTES"]
+        }
+      }
+    }
+  }
+  
+  lambda_env = {
+    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.id
+    REFERENCES_TABLE = aws_dynamodb_table.references_table.id
+  }
+}

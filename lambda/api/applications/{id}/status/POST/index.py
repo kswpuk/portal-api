@@ -1,6 +1,6 @@
 
 import boto3
-from   boto3.dynamodb.conditions import Attr
+from   boto3.dynamodb.conditions import Key
 import datetime
 import json
 import logging
@@ -29,42 +29,52 @@ applications_table = dynamodb.Table(APPLICATIONS_TABLE)
 references_table = dynamodb.Table(REFERENCES_TABLE)
 
 def handler(event, context):
-  # Get data
-  logger.debug("Scanning for all applications")
+  membership_number = event['pathParameters']['id']
+
+  body = json.loads(event['body'])
+  birth_date = body.get('dateOfBirth', None)
+
+  if birth_date is None:
+    return {
+      "statusCode": 400,
+      "headers": headers,
+      "body": "Date of birth must be provided for validation purposes"
+    }
+  
   try:
-    applications = scan_table(applications_table)
+    application = applications_table.get_item(Key={
+      "membershipNumber": membership_number
+    }, ProjectionExpression="membershipNumber,dateOfBirth,submittedAt")['Item']
   except Exception as e:
-    logger.error(f"Unable to scan applications table: {str(e)}")
+    return {
+      "statusCode": 404,
+      "headers": headers,
+      "body": "Could not find application"
+    }
+  
+  if birth_date != application['dateOfBirth']:
+    return {
+      "statusCode": 404,
+      "headers": headers,
+      "body": "Could not find application"  # Same error message here so we don't give away whether this application exists or not
+    }
+
+  try:
+    references = get_references(membership_number)
+  except Exception as e:
     return {
       "statusCode": 500,
       "headers": headers,
-      "body": "Unable to scan applications table"
+      "body": f"Unable to get references : {str(e)}"
     }
-
-  logger.debug("Scanning for all references")
-  try:
-    references = scan_table(references_table, FilterExpression=Attr("submittedAt").gt(0))
-  except Exception as e:
-    logger.error(f"Unable to scan references table: {str(e)}")
-    return {
-      "statusCode": 500,
-      "headers": headers,
-      "body": "Unable to scan references table"
-    }
-
-  # Process references
-  logger.debug("Processing references")
-
-  reference_status = {}
+  
+  status = {"scouting": None, "nonScouting": None, "fiveYears": None}
   for ref in references:
-    status = reference_status.get(ref["membershipNumber"], {"scouting": None, "nonScouting": None, "fiveYears": None})
-
     relationship = ref.get("relationship", None)
     if relationship is None:
       continue
 
     accepted = "accepted" in ref and ref["accepted"]
-
     if accepted:
       status[relationship] = "ACCEPTED"
     elif status[relationship] != "ACCEPTED":
@@ -77,36 +87,33 @@ def handler(event, context):
       elif status["fiveYears"] != "ACCEPTED":
         status["fiveYears"] = "SUBMITTED"
     
-    reference_status[ref["membershipNumber"]] = status
-
-  # Combine references
-  results = []
-  for app in applications:
-    results.append({
-      **app,
-      "submittedAt": int(app["submittedAt"]),
-      "applicationStatus": reference_status.get(app["membershipNumber"], {"scouting": None, "nonScouting": None, "fiveYears": False})
-    })
-
   return {
     "statusCode": 200,
     "headers": headers,
-    "body": json.dumps(results)
+    "body": json.dumps({
+      "membershipNumber": membership_number,
+      "submittedAt": int(application["submittedAt"]),
+      "status": status
+    })
   }
 
-def scan_table(table, **kwargs):
+def get_references(membership_number):
   results = []
   last_evaluated_key = None
 
   while True:
     if last_evaluated_key:
-      response = table.scan(
-        ExclusiveStartKey=last_evaluated_key
-        **kwargs
+      response = references_table.query(
+        Select="SPECIFIC_ATTRIBUTES",
+        ExclusiveStartKey=last_evaluated_key,
+        KeyConditionExpression=Key('membershipNumber').eq(membership_number),
+        ProjectionExpression="membershipNumber,accepted,relationship,howLong"
       )
     else: 
-      response = table.scan(
-        **kwargs
+      response = references_table.query(
+        Select="SPECIFIC_ATTRIBUTES",
+        KeyConditionExpression=Key('membershipNumber').eq(membership_number),
+        ProjectionExpression="membershipNumber,accepted,relationship,howLong"
       )
 
     last_evaluated_key = response.get('LastEvaluatedKey')    
