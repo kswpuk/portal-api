@@ -1,0 +1,10 @@
+<p>
+  The following events took place 8 months ago, in {{month}} {{year}}.
+  If these are annual events and the organisers haven't yet been in touch regarding QSWP support for this year's event, then please contact them to confirm what support they may require.
+</p>
+
+<ul>
+  {{#each eventDetails}}
+    <li><a href="https://{{portalDomain}}/events/{{eventSeriesId}}/{{eventId}}">{{name}} ({{location}})</a></li>
+  {{/each}}
+</ul>

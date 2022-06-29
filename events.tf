@@ -76,6 +76,12 @@ resource "aws_ses_template" "event_allocation_reminder" {
   html    = file("${path.module}/emails/event_allocation_reminder.html")
 }
 
+resource "aws_ses_template" "event_reminder" {
+  name    = "${var.prefix}-event_reminder"
+  subject = "Event Reminder"
+  html    = file("${path.module}/emails/event_reminder.html")
+}
+
 # Lambda - New Event Notification, Remove allocations on Deleted Event
 module "sync_events" {
   source = "terraform-aws-modules/lambda/aws"
@@ -329,4 +335,82 @@ module "event_allocation_reminder" {
 resource "aws_cloudwatch_event_target" "event_allocation_reminder" {
   rule = aws_cloudwatch_event_rule.daily_0700.name
   arn = module.event_allocation_reminder.lambda_function_arn
+}
+
+
+# Lambda - Event Reminder
+
+module "event_reminder" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  source_path = [
+    {
+      path = "${path.module}/lambda/cron/event_reminder"
+      pip_requirements = false
+    }
+  ]
+
+  function_name = "${var.prefix}-event_reminder-lambda"
+  description = "Event reminder"
+  handler = "index.handler"
+  runtime = "python3.9"
+
+  attach_cloudwatch_logs_policy = true
+
+  attach_policy_statements = true
+  policy_statements = {
+    dynamodb_get = {
+      actions = [
+        "dynamodb:GetItem",
+      ]
+      resources = [ 
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+
+    dynamodb_scan = {
+      actions = [
+        "dynamodb:Scan",
+      ]
+      resources = [ 
+        aws_dynamodb_table.event_instance_table.arn
+      ]
+    }
+
+    ses = {
+      actions = [
+        "ses:SendTemplatedEmail"
+      ]
+      resources = [
+        aws_ses_template.event_reminder.arn,
+        data.aws_ses_domain_identity.qswp.arn
+      ]
+    }
+  }
+
+  role_name = "${var.prefix}-event_reminder-role"
+
+  publish = true
+  allowed_triggers = {
+    eventbridge = {
+      principal  = "events.amazonaws.com"
+      source_arn = aws_cloudwatch_event_rule.monthly.arn
+    }
+  }
+
+  timeout = 300
+  memory_size = 512
+
+  environment_variables = {
+    EVENT_INSTANCE_TABLE =  aws_dynamodb_table.event_instance_table.name
+    EVENT_REMINDER_TEMPLATE = aws_ses_template.event_reminder.name
+    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL = var.events_email
+    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+  }
+}
+
+resource "aws_cloudwatch_event_target" "event_reminder" {
+  rule = aws_cloudwatch_event_rule.monthly.name
+  arn = module.event_reminder.lambda_function_arn
 }
