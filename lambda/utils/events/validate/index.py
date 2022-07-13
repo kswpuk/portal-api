@@ -49,7 +49,10 @@ def handler(event, context):
   if len(eventId) > 20:
     validationErrors.append("Event ID cannot be longer than 20 characters")
   
-  if not re.match("^[a-z0-9][-a-z0-9]{,19}$", eventSeriesId):
+  if len(eventId) < 2:
+    validationErrors.append("Event ID must be at least 2 characters long")
+  
+  if not re.match("^[a-z0-9][-a-z0-9]+$", eventSeriesId):
     validationErrors.append("Event ID must start with a letter or a number, and can only contain lower case characters, numbers and hyphens")
 
   details = str(event.get("details", "")).strip()
