@@ -81,7 +81,7 @@ def handler(event, context):
 
   # If no weighting, then just randomly allocate
   if rules is None:
-    selected = np.random.choice(list(weightings.keys()), attendanceLimit, replace=False)
+    selected = np.random.choice(list(map(lambda a: a["membershipNumber"], registered_allocations)), attendanceLimit, replace=False)
   
   # Otherwise apply the rules
   else:
