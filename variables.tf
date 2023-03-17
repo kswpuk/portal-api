@@ -24,7 +24,7 @@ variable "stripe_api_key" {
 
 variable "domain" {
   type = string
-  default = "qswp.org.uk"
+  default = "kswp.org.uk"
 }
 
 variable "events_email" {
