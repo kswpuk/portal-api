@@ -31,7 +31,7 @@ EOF
 # API Gateway
 resource "aws_api_gateway_rest_api" "portal" {
   name = "${var.prefix}-api"
-  description = "REST API for QSWP Portal"
+  description = "REST API for KSWP Portal"
   binary_media_types = ["image/*", "multipart/form-data"]
 }
 

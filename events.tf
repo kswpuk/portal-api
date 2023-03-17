@@ -60,7 +60,7 @@ resource "aws_dynamodb_table" "event_allocation_table" {
 
 resource "aws_ses_template" "event_added" {
   name    = "${var.prefix}-event_added"
-  subject = "A new QSWP event has been added"
+  subject = "A new KSWP event has been added"
   html    = file("${path.module}/emails/event_added.html")
 }
 

@@ -75,7 +75,7 @@ def reference_completed(reference, application):
   referenceEmail = reference['referenceEmail']['S']
   try:
     ses.send_templated_email(
-      Source='"QSWP Portal" <portal@qswp.org.uk>',
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
       Destination={
         'ToAddresses': [
           '"'+referenceName+'" <'+referenceEmail+'>',
@@ -87,7 +87,7 @@ def reference_completed(reference, application):
       ReplyToAddresses=[
         MEMBERS_EMAIL
       ],
-      ReturnPath='bounces@qswp.org.uk',
+      ReturnPath='bounces@kswp.org.uk',
       Template=REFERENCE_RECEIVED_TEMPLATE,
       TemplateData=json.dumps({
         'referenceName': referenceName,
@@ -109,7 +109,7 @@ def referee_added(reference, application):
   referenceEmail = reference['referenceEmail']['S']
   try:
     ses.send_templated_email(
-      Source='"QSWP Portal" <portal@qswp.org.uk>',
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
       Destination={
         'ToAddresses': [
           '"'+referenceName+'" <'+referenceEmail+'>',
@@ -121,7 +121,7 @@ def referee_added(reference, application):
       ReplyToAddresses=[
         MEMBERS_EMAIL
       ],
-      ReturnPath='bounces@qswp.org.uk',
+      ReturnPath='bounces@kswp.org.uk',
       Template=REFERENCE_REQUEST_TEMPLATE,
       TemplateData=json.dumps({
         'referenceName': referenceName,

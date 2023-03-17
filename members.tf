@@ -197,31 +197,31 @@ resource "aws_cloudwatch_event_target" "delete_accounts" {
 
 resource "aws_ses_template" "application_accepted" {
   name    = "${var.prefix}-application_accepted"
-  subject = "Your QSWP application has been accepted"
+  subject = "Your KSWP application has been accepted"
   html    = file("${path.module}/emails/application_accepted.html")
 }
 
 resource "aws_ses_template" "membership_expires_soon" {
   name    = "${var.prefix}-membership_expires_soon"
-  subject = "Your QSWP membership will expire soon"
+  subject = "Your KSWP membership will expire soon"
   html    = file("${path.module}/emails/membership_expires_soon.html")
 }
 
 resource "aws_ses_template" "membership_expired" {
   name    = "${var.prefix}-membership_expired"
-  subject = "Your QSWP membership has expired"
+  subject = "Your KSWP membership has expired"
   html    = file("${path.module}/emails/membership_expired.html")
 }
 
 resource "aws_ses_template" "account_deleted_soon" {
   name    = "${var.prefix}-account_deleted_soon"
-  subject = "Your QSWP account will be deleted soon"
+  subject = "Your KSWP account will be deleted soon"
   html    = file("${path.module}/emails/account_deleted_soon.html")
 }
 
 resource "aws_ses_template" "account_deleted" {
   name    = "${var.prefix}-account_deleted"
-  subject = "Your QSWP account has been deleted"
+  subject = "Your KSWP account has been deleted"
   html    = file("${path.module}/emails/account_deleted.html")
 }
 

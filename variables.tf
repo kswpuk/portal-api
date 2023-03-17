@@ -29,15 +29,15 @@ variable "domain" {
 
 variable "events_email" {
   type = string
-  default = "\"QSWP Events Coordinator\" <events@qswp.org.uk>"
+  default = "\"KSWP Events Coordinator\" <events@kswp.org.uk>"
 }
 
 variable "members_email" {
   type = string
-  default = "\"QSWP Membership Coordinator\" <members@qswp.org.uk>"
+  default = "\"KSWP Membership Coordinator\" <members@kswp.org.uk>"
 }
 
 variable "money_email" {
   type = string
-  default = "\"QSWP Treasurer\" <money@qswp.org.uk>"
+  default = "\"KSWP Treasurer\" <money@kswp.org.uk>"
 }

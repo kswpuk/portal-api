@@ -294,6 +294,56 @@ module "members_id_allocations_GET" {
   }
 }
 
+# /members/{id}/membershipnumber
+
+module "members_id_membershipnumber" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members_id.resource_id
+  path_part   = "membershipnumber"
+}
+
+module "members_id_membershipnumber_POST" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_id_allocations.resource_path
+
+  http_method   = "POST"
+
+  prefix = var.prefix
+  name = "members_id_membershipnumber"
+  description = "Update membership number for member"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/members/{id}/membershipnumber/POST"
+
+  lambda_policy = {
+    allocations = {
+      actions = [ "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query" ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn,
+        "${aws_dynamodb_table.event_allocation_table.arn}/index/${var.prefix}-member_event_allocations"
+      ]
+    }
+
+    members = {
+      actions = [ "dynamodb:GetItem", "dynamodb:PutItem" ]
+      resources = [ aws_dynamodb_table.members_table.arn ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_INDEX = "${var.prefix}-member_event_allocations"
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.id
+  }
+}
+
 # /members/{id}/necker
 
 module "members_id_necker" {

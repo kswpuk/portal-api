@@ -58,7 +58,7 @@ def handler(event, context):
         
       name = fname + " " + expireSoonMember['surname']
       ses.send_templated_email(
-        Source='"QSWP Portal" <portal@qswp.org.uk>',
+        Source='"KSWP Portal" <portal@kswp.org.uk>',
         Destination={
           'ToAddresses': [
             '"'+name+'" <'+expireSoonMember['email']+'>',
@@ -67,7 +67,7 @@ def handler(event, context):
         ReplyToAddresses=[
           MEMBERS_EMAIL
         ],
-        ReturnPath='bounces@qswp.org.uk',
+        ReturnPath='bounces@kswp.org.uk',
         Template=EXPIRES_SOON_TEMPLATE,
         TemplateData=json.dumps({
           'name': name,
@@ -122,9 +122,14 @@ def handler(event, context):
     
     # Send e-mail to members who have expired
     try:
-      name = expiredActiveMember.get('preferredName', expiredActiveMember['firstName']) + " " + expiredActiveMember['surname']
+      fname = expiredActiveMember.get('preferredName', expiredActiveMember['firstName'])
+      if fname.strip() == "":
+        fname = expiredActiveMember['firstName']
+        
+      name = fname + " " + expiredActiveMember['surname']
+
       ses.send_templated_email(
-        Source='"QSWP Portal" <portal@qswp.org.uk>',
+        Source='"KSWP Portal" <portal@kswp.org.uk>',
         Destination={
           'ToAddresses': [
             '"'+name+'" <'+expiredActiveMember['email']+'>',
@@ -133,7 +138,7 @@ def handler(event, context):
         ReplyToAddresses=[
             MEMBERS_EMAIL
         ],
-        ReturnPath='bounces@qswp.org.uk',
+        ReturnPath='bounces@kswp.org.uk',
         Template=MEMBERSHIP_EXPIRED_TEMPLATE,
         TemplateData=json.dumps({
           'name': name,

@@ -84,8 +84,8 @@ def handler(event, context):
         'price_data': {
           'currency': 'gbp',
           'product_data': {
-            'name': 'QSWP Membership',
-            'description': 'Annual QSWP membership fee'
+            'name': 'KSWP Membership',
+            'description': 'Annual KSWP membership fee'
           },
           'unit_amount': 500,
         },

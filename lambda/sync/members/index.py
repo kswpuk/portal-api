@@ -97,7 +97,7 @@ def handler(event, context):
 def send_welcome_email(membershipNumber, newImage):
   try:
     ses.send_templated_email(
-      Source='"QSWP Portal" <portal@qswp.org.uk>',
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
       Destination={
         'ToAddresses': [
           '"'+newImage['firstName']['S']+' '+newImage['surname']['S']+'" <'+newImage['email']['S']+'>',
@@ -106,7 +106,7 @@ def send_welcome_email(membershipNumber, newImage):
       ReplyToAddresses=[
         MEMBERS_EMAIL
       ],
-      ReturnPath='bounces@qswp.org.uk',
+      ReturnPath='bounces@kswp.org.uk',
       Template=APPLICATION_ACCEPTED_TEMPLATE,
       TemplateData=json.dumps({
         'firstName': newImage['firstName']['S'],

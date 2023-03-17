@@ -46,9 +46,9 @@ resource "aws_cognito_user_pool" "portal" {
   admin_create_user_config {
     allow_admin_create_user_only = true
     invite_message_template {
-      email_subject = "Welcome to the QSWP Portal"
-      email_message = "An account has been created for you on the QSWP Portal, which can be accessed at https://${aws_route53_record.portal.fqdn}. Your username is {username}, and your temporary password is {####}"
-      sms_message = "Your QSWP Portal username is {username}, and your temporary password is {####}"
+      email_subject = "Welcome to the KSWP Portal"
+      email_message = "An account has been created for you on the KSWP Portal, which can be accessed at https://${aws_route53_record.portal.fqdn}. Your username is {username}, and your temporary password is {####}"
+      sms_message = "Your KSWP Portal username is {username}, and your temporary password is {####}"
     }
   }
 
@@ -70,7 +70,7 @@ resource "aws_cognito_user_pool" "portal" {
 
   email_configuration {
     email_sending_account = "DEVELOPER"
-    from_email_address = "QSWP Portal <${var.prefix}@${var.domain}>"
+    from_email_address = "KSWP Portal <${var.prefix}@${var.domain}>"
     source_arn = data.aws_ses_domain_identity.qswp.arn
   }
 }
@@ -87,56 +87,56 @@ resource "aws_cognito_user_pool_client" "portal" {
 resource "aws_cognito_user_group" "manager" {
   name         = "MANAGER"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "QSWP Manager"
+  description  = "KSWP Manager"
   precedence   = 1
 }
 
 resource "aws_cognito_user_group" "members" {
   name         = "MEMBERS"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "QSWP Membership Coordinator"
+  description  = "KSWP Membership Coordinator"
   precedence   = 5
 }
 
 resource "aws_cognito_user_group" "events" {
   name         = "EVENTS"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "QSWP Event Coordinator"
+  description  = "KSWP Event Coordinator"
   precedence   = 5
 }
 
 resource "aws_cognito_user_group" "money" {
   name         = "MONEY"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "QSWP Finance Coordinator"
+  description  = "KSWP Finance Coordinator"
   precedence   = 5
 }
 
 resource "aws_cognito_user_group" "socials" {
   name         = "SOCIALS"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "QSWP Social Coordinator"
+  description  = "KSWP Social Coordinator"
   precedence   = 10
 }
 
 resource "aws_cognito_user_group" "media" {
   name         = "MEDIA"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "QSWP Media Coordinator"
+  description  = "KSWP Media Coordinator"
   precedence   = 10
 }
 
 resource "aws_cognito_user_group" "committee" {
   name         = "COMMITTEE"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "QSWP Committee members"
+  description  = "KSWP Committee members"
   precedence   = 20
 }
 
 resource "aws_cognito_user_group" "standard" {
   name         = "STANDARD"
   user_pool_id = aws_cognito_user_pool.portal.id
-  description  = "Standard members of the QSWP"
+  description  = "Standard members of the KSWP"
   precedence   = 100
 }
 

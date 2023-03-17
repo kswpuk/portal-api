@@ -80,7 +80,7 @@ def handler(event, context):
       "statusCode": 422,
       "headers": headers,
       "body": json.dumps({
-        "message": "This membership number belongs to an existing member or the QSWP"
+        "message": "This membership number belongs to an existing member or the KSWP"
       })
     }
 
@@ -113,7 +113,7 @@ def handler(event, context):
   else:
     dob = datetime.date.fromisoformat(application.get("dateOfBirth"))
     if datetime.datetime.now().year - dob.year < 18:
-      validationErrors.append("You must be at least 18 to join the QSWP")
+      validationErrors.append("You must be at least 18 to join the KSWP")
 
   email = str(application.get("email")).strip().lower()
   if not email:
@@ -145,9 +145,9 @@ def handler(event, context):
   
   qsaReceived = str(application.get("qsaReceived")).strip()
   if not qsaReceived:
-    validationErrors.append("Month you received your Queen's Scout Award cannot be empty")
+    validationErrors.append("Month you received your King's Scout or Queen's Scout Award cannot be empty")
   elif not re.match("^(19|20)[0-9]{2}-(0[1-9]|1[0-2])$", qsaReceived):
-    validationErrors.append("Month you received your Queen's Scout Award is not valid")
+    validationErrors.append("Month you received your King's Scout or Queen's Scout Award is not valid")
 
   try:
     evidence = Image.open(io.BytesIO(base64.decodebytes(bytes(application.get("evidence").split(",", 1)[1], "utf-8")))).convert("RGB")

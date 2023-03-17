@@ -102,7 +102,7 @@ def handler(event, context):
     try:
       name = member.get('preferredName', member['firstName']) + " " + member['surname']
       ses.send_templated_email(
-        Source='"QSWP Portal" <portal@qswp.org.uk>',
+        Source='"KSWP Portal" <portal@kswp.org.uk>',
         Destination={
           'ToAddresses': [
             '"'+name+'" <'+member['email']+'>',
@@ -111,7 +111,7 @@ def handler(event, context):
         ReplyToAddresses=[
           MEMBERS_EMAIL
         ],
-        ReturnPath='bounces@qswp.org.uk',
+        ReturnPath='bounces@kswp.org.uk',
         Template=ACCOUNT_DELETED_TEMPLATE,
         TemplateData=json.dumps({
           'name': name
@@ -152,7 +152,7 @@ def reminders(expiredDate, table):
 
       name = firstName + " " + reminderMember['surname']
       ses.send_templated_email(
-        Source='"QSWP Portal" <portal@qswp.org.uk>',
+        Source='"KSWP Portal" <portal@kswp.org.uk>',
         Destination={
           'ToAddresses': [
             '"'+name+'" <'+reminderMember['email']+'>',
@@ -161,7 +161,7 @@ def reminders(expiredDate, table):
         ReplyToAddresses=[
           MEMBERS_EMAIL
         ],
-        ReturnPath='bounces@qswp.org.uk',
+        ReturnPath='bounces@kswp.org.uk',
         Template=DELETED_SOON_TEMPLATE,
         TemplateData=json.dumps({
           'name': name,

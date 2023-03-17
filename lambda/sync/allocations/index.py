@@ -104,7 +104,7 @@ def updated_allocation(combinedEventId, membershipNumber, allocation):
 
   try:
     ses.send_templated_email(
-      Source='"QSWP Portal" <portal@qswp.org.uk>',
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
       Destination={
         'ToAddresses': [
           '"'+name+'" <'+member['email']+'>',
@@ -113,7 +113,7 @@ def updated_allocation(combinedEventId, membershipNumber, allocation):
       ReplyToAddresses=[
         EVENTS_EMAIL
       ],
-      ReturnPath='bounces@qswp.org.uk',
+      ReturnPath='bounces@kswp.org.uk',
       Template=EVENT_ALLOCATION_TEMPLATE,
       TemplateData=json.dumps({
         'firstName': firstName,

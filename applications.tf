@@ -56,19 +56,19 @@ resource "aws_s3_bucket_public_access_block" "applications_evidence_bucket" {
 
 resource "aws_ses_template" "application_received" {
   name    = "${var.prefix}-application_received"
-  subject = "QSWP - Application Received"
+  subject = "KSWP - Application Received"
   html    = file("${path.module}/emails/application_received.html")
 }
 
 resource "aws_ses_template" "reference_request" {
   name    = "${var.prefix}-reference_request"
-  subject = "QSWP - Request for Reference"
+  subject = "KSWP - Request for Reference"
   html    = file("${path.module}/emails/reference_request.html")
 }
 
 resource "aws_ses_template" "reference_received" {
   name    = "${var.prefix}-reference_received"
-  subject = "QSWP - Reference Received"
+  subject = "KSWP - Reference Received"
   html    = file("${path.module}/emails/reference_received.html")
 }
 

@@ -53,7 +53,7 @@ def application_received(application):
   
   try:
     ses.send_templated_email(
-      Source='"QSWP Portal" <portal@qswp.org.uk>',
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
       Destination={
         'ToAddresses': [
           '"'+name+'" <'+email+'>',
@@ -65,7 +65,7 @@ def application_received(application):
       ReplyToAddresses=[
         MEMBERS_EMAIL
       ],
-      ReturnPath='bounces@qswp.org.uk',
+      ReturnPath='bounces@kswp.org.uk',
       Template=APPLICATION_RECEIVED_TEMPLATE,
       TemplateData=json.dumps({
         'name': name,

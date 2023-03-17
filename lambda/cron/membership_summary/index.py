@@ -101,13 +101,13 @@ def handler(event, context):
 
     try:
       response = ses.send_templated_email(
-        Source='"QSWP Portal" <portal@qswp.org.uk>',
+        Source='"KSWP Portal" <portal@kswp.org.uk>',
         Destination={
           'ToAddresses': [
             MEMBERS_EMAIL
           ]
         },
-        ReturnPath='bounces@qswp.org.uk',
+        ReturnPath='bounces@kswp.org.uk',
         Template=MEMBERSHIP_SUMMARY_TEMPLATE,
         TemplateData=json.dumps({
           'portalDomain': PORTAL_DOMAIN,
