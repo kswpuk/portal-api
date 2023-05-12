@@ -31,15 +31,26 @@ resource "aws_s3_bucket_website_configuration" "hosting" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "hosting" {
+  bucket = aws_s3_bucket.hosting.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
 resource "aws_s3_bucket_policy" "hosting" {
   bucket = aws_s3_bucket.hosting.id
   policy = data.aws_iam_policy_document.hosting.json
+
+  depends_on = [ aws_s3_bucket_public_access_block.hosting ]
 }
 
-resource "aws_s3_bucket_acl" "hosting" {
-  bucket = aws_s3_bucket.hosting.id
-  acl    = "public-read"
-}
+# resource "aws_s3_bucket_acl" "hosting" {
+#   bucket = aws_s3_bucket.hosting.id
+#   acl    = "public-read"
+# }
 
 data "aws_iam_policy_document" "hosting" {
   statement {
