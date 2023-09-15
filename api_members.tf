@@ -565,3 +565,46 @@ module "members_id_role_PATCH" {
 }
 END
 }
+
+# /members/report
+
+module "members_report" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members.resource_id
+  path_part   = "report"
+}
+
+module "members_report_GET" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.members_report.resource_path
+
+  http_method = "GET"
+
+  prefix = var.prefix
+  name = "members_report"
+  description = "Generate membership report"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/members/report/GET"
+
+  lambda_policy = {
+    members = {
+      actions = [ 
+        "dynamodb:GetItem",
+        "dynamodb:Scan"
+      ]
+      resources = [ aws_dynamodb_table.members_table.arn ]
+    }
+  }
+  
+  lambda_env = {
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.name
+  }
+}

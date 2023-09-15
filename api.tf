@@ -53,6 +53,7 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.members_id_photo_GET),
       jsonencode(module.members_id_photo_PUT),
       jsonencode(module.members_id_role_PATCH),
+      jsonencode(module.members_report_GET),
 
       jsonencode(module.applications_GET),
       jsonencode(module.applications_id_GET),
@@ -106,6 +107,7 @@ resource "aws_api_gateway_deployment" "portal" {
     module.members_id_photo_GET,
     module.members_id_photo_PUT,
     module.members_id_role_PATCH,
+    module.members_report_GET,
 
     module.applications_GET,
     module.applications_id_GET,
