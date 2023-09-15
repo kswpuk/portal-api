@@ -31,6 +31,13 @@ members_table = dynamodb.Table(MEMBERS_TABLE)
 event_cache = dict()
 series_cache = dict()
 
+# Time deltas
+td_6mo = datetime.timedelta(days=(0.5*365))
+td_1yr = datetime.timedelta(days=365)
+td_2yr = datetime.timedelta(days=(2*365))
+td_3yr = datetime.timedelta(days=(3*365))
+td_5yr = datetime.timedelta(days=(5*365))
+
 def handler(event, context):
   logger.debug(event)
 
@@ -110,22 +117,22 @@ def handler(event, context):
         continue
 
       e_start = datetime.date.fromisoformat(e.get("startDate")[0:10])
-      diff = (event_start - e_start)/365.25
+      diff = event_start - e_start
 
       ## Has attended event series in past year
-      if diff < 1:
+      if diff < td_1yr:
         weightings["attended_1yr"] += 1
       
       ## Has attended event series in past 2 years
-      if diff < 2:
+      if diff < td_2yr:
         weightings["attended_2yr"] += 1
       
       ## Has attended event series in past 3 years
-      if diff < 3:
+      if diff < td_3yr:
         weightings["attended_3yr"] += 1
       
       ## Has attended event series in past 5 years
-      if diff < 5:
+      if diff < td_5yr:
         weightings["attended_5yr"] += 1
 
   # TODO: Attended oversubscribed event in last X
@@ -156,22 +163,22 @@ def handler(event, context):
         continue
 
       e_start = datetime.date.fromisoformat(e.get("startDate")[0:10])
-      diff = (event_start - e_start)/365.25
+      diff = event_start - e_start
 
       ## Dropped out in past 6 months
-      if diff < 0.5:
+      if diff < td_6mo:
         weightings["droppedout_6mo"] += 1
       
       ## Dropped out in past year
-      if diff < 1:
+      if diff < td_1yr:
         weightings["droppedout_1yr"] += 1
       
       ## Dropped out in past 2 years
-      if diff < 2:
+      if diff < td_2yr:
         weightings["droppedout_2yr"] += 1
       
       ## Dropped out in past 3 years
-      if diff < 3:
+      if diff < td_3yr:
         weightings["droppedout_3yr"] += 1
 
   if "noshow_6mo" in rules or "noshow_1yr" in rules or "noshow_2yr" in rules or "noshow_3yr" in rules:
@@ -200,33 +207,33 @@ def handler(event, context):
         continue
 
       e_start = datetime.date.fromisoformat(e.get("startDate")[0:10])
-      diff = (event_start - e_start)/365.25
+      diff = event_start - e_start
 
       ## No show in past 6 months
-      if diff < 0.5:
+      if diff < td_6mo:
         weightings["noshow_6mo"] += 1
       
       ## No show in past year
-      if diff < 1:
+      if diff < td_1yr:
         weightings["noshow_1yr"] += 1
       
       ## No show in past 2 years
-      if diff < 2:
+      if diff < td_2yr:
         weightings["noshow_2yr"] += 1
       
       ## No show in past 3 years
-      if diff < 3:
+      if diff < td_3yr:
         weightings["noshow_3yr"] += 1
 
   # Check join date
   if "joined_1yr" in rules or "joined_2yr" in rules or "joined_3yr" in rules or "joined_5yr" in rules:
     join_date = datetime.date.fromisoformat(member.get("joinDate"))
-    join_date_delta_days = (event_start - join_date).days
+    join_date_delta = event_start - join_date
 
-    weightings["joined_1yr"] = 1 if join_date_delta_days <= 365 else 0
-    weightings["joined_2yr"] = 1 if join_date_delta_days <= 365*2 else 0
-    weightings["joined_3yr"] = 1 if join_date_delta_days <= 365*3 else 0
-    weightings["joined_5yr"] = 1 if join_date_delta_days <= 365*5 else 0
+    weightings["joined_1yr"] = 1 if join_date_delta <= td_1yr else 0
+    weightings["joined_2yr"] = 1 if join_date_delta <= td_2yr else 0
+    weightings["joined_3yr"] = 1 if join_date_delta <= td_3yr else 0
+    weightings["joined_5yr"] = 1 if join_date_delta <= td_5yr else 0
 
   if "qsa_1yr" in rules or "qsa_2yr" in rules or "qsa_3yr" in rules or "qsa_5yr" in rules:
     ## TODO: Got QSA within past year
