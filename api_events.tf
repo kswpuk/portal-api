@@ -715,3 +715,52 @@ module "events_seriesId_eventId_register_id_POST" {
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
   }
 }
+
+# /events/report
+
+module "events_report" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events.resource_id
+  path_part   = "report"
+}
+
+module "events_report_GET" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_report.resource_path
+
+  http_method = "GET"
+
+  prefix = var.prefix
+  name = "events_report"
+  description = "Generate events report"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/report/GET"
+
+  lambda_policy = {
+    events = {
+      actions = [ 
+        "dynamodb:GetItem",
+        "dynamodb:Scan"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn,
+        aws_dynamodb_table.event_instance_table.arn,
+        aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
+  }
+}

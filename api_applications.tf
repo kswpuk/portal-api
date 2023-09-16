@@ -558,3 +558,50 @@ module "applications_id_status_POST" {
     REFERENCES_TABLE = aws_dynamodb_table.references_table.id
   }
 }
+
+# /applications/report
+
+module "applications_report" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.applications.resource_id
+  path_part   = "report"
+}
+
+module "applications_report_GET" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.applications_report.resource_path
+
+  http_method = "GET"
+
+  prefix = var.prefix
+  name = "applications_report"
+  description = "Generate applications report"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/applications/report/GET"
+
+  lambda_policy = {
+    applications = {
+      actions = [ 
+        "dynamodb:GetItem",
+        "dynamodb:Scan"
+      ]
+      resources = [
+        aws_dynamodb_table.applications_table.arn,
+        aws_dynamodb_table.references_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.id,
+    REFERENCES_TABLE = aws_dynamodb_table.references_table.id
+  }
+}

@@ -1,4 +1,3 @@
-
 import boto3
 from collections import Counter
 import datetime
@@ -26,7 +25,7 @@ members_table = dynamodb.Table(MEMBERS_TABLE)
 
 def handler(event, context):
 
-  # Get list from Portal
+  # Get members
   try:
     portal_members = scan_members()
   except Exception as e:
@@ -51,19 +50,32 @@ def handler(event, context):
     "OVER_65": 0
   }
 
+  oldestDate = datetime.date.today()
+  newestDate = datetime.date.fromisoformat("1900-01-01")
+
   for member in portal_members:
     ageCount[group_age(calculate_years(member['dateOfBirth']))] += 1
+    
+    joinDate = datetime.date.fromisoformat(member['joinDate'])
+    if joinDate > newestDate:
+      newestDate = joinDate
+
+    if joinDate < oldestDate:
+      oldestDate = joinDate
 
   return {
     "statusCode": 200,
     "headers": headers,
     "body": json.dumps({
+      "count": len(portal_members),
       "counts": {
         "status": statusCount,
         "time": timeCount,
         "age": ageCount,
         "postcode": postcodeCount
-      }
+      },
+      "newest": newestDate.isoformat(),
+      "oldest": oldestDate.isoformat()
     })
   }
 
