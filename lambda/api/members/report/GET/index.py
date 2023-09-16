@@ -39,6 +39,7 @@ def handler(event, context):
 
   statusCount = Counter([member['status'] for member in portal_members])
   timeCount = Counter([calculate_years(member['joinDate']) for member in portal_members])
+  postcodeCount = Counter([get_area(member['postcode']) for member in portal_members])
 
   ageCount = {
     "UNDER_18": 0,
@@ -60,7 +61,8 @@ def handler(event, context):
       "counts": {
         "status": statusCount,
         "time": timeCount,
-        "age": ageCount
+        "age": ageCount,
+        "postcode": postcodeCount
       }
     })
   }
@@ -73,7 +75,7 @@ def scan_members(**kwargs):
     if last_evaluated_key:
       response = members_table.scan(
         ExclusiveStartKey=last_evaluated_key,
-        ProjectionExpression="dateOfBirth,joinDate,#s",
+        ProjectionExpression="dateOfBirth,joinDate,postcode,#s",
         ExpressionAttributeNames={
           "#s": "status"
         },
@@ -81,7 +83,7 @@ def scan_members(**kwargs):
       )
     else: 
       response = members_table.scan(
-        ProjectionExpression="dateOfBirth,joinDate,#s",
+        ProjectionExpression="dateOfBirth,joinDate,postcode,#s",
         ExpressionAttributeNames={
           "#s": "status"
         },
@@ -117,3 +119,6 @@ def group_age(age):
     return "55_65"
   else:
     return "OVER_65"
+
+def get_area(postcode):
+  return postcode[:-3].strip().upper()
