@@ -751,9 +751,17 @@ module "events_report_GET" {
         "dynamodb:Scan"
       ]
       resources = [
-        aws_dynamodb_table.event_allocation_table.arn,
         aws_dynamodb_table.event_instance_table.arn,
         aws_dynamodb_table.event_series_table.arn
+      ]
+    }
+
+    allocations = {
+      actions = [ 
+        "dynamodb:Query"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn,
       ]
     }
   }
@@ -762,5 +770,71 @@ module "events_report_GET" {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
+  }
+}
+
+# /events/report/attendance
+
+module "events_report_attendance" {
+  source = "./api_resource"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_report.resource_id
+  path_part   = "attendance"
+}
+
+module "events_report_attendance_GET" {
+  source = "./api_method_lambda"
+  depends_on = [ aws_api_gateway_rest_api.portal ]
+  
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path = module.events_report_attendance.resource_path
+
+  http_method = "GET"
+
+  prefix = var.prefix
+  name = "events_report_attendance"
+  description = "Generate events attendance report"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  lambda_path = "${path.module}/lambda/api/events/report/attendance/GET"
+
+  lambda_policy = {
+    events = {
+      actions = [ 
+        "dynamodb:GetItem"
+      ]
+      resources = [
+        aws_dynamodb_table.event_instance_table.arn
+      ]
+    }
+
+    allocations = {
+      actions = [ 
+        "dynamodb:Query"
+      ]
+      resources = [
+        aws_dynamodb_table.event_allocation_table.arn,
+        "${aws_dynamodb_table.event_allocation_table.arn}/index/${var.prefix}-member_event_allocations"
+      ]
+    }
+
+    members = {
+      actions = [ 
+        "dynamodb:Scan"
+      ]
+      resources = [
+        aws_dynamodb_table.members_table.arn
+      ]
+    }
+  }
+  
+  lambda_env = {
+    EVENT_ALLOCATIONS_INDEX = "${var.prefix}-member_event_allocations"
+    EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
+    MEMBERS_TABLE = aws_dynamodb_table.members_table.id
   }
 }

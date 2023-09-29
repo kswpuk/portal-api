@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+import re
 
 # Configure logging
 logger = logging.getLogger()
@@ -51,8 +52,8 @@ def handler(event, context):
     if app['submittedAt'] < oldestTimestamp:
       oldestTimestamp = app['submittedAt']
 
-  newestDate = datetime.datetime.fromtimestamp(oldestTimestamp).date()
-  oldestDate = datetime.datetime.fromtimestamp(newestTimestamp).date()
+  newestDate = datetime.datetime.fromtimestamp(newestTimestamp).date()
+  oldestDate = datetime.datetime.fromtimestamp(oldestTimestamp).date()
   today = datetime.date.today()
 
   # TODO: Application status
@@ -98,4 +99,4 @@ def scan_applications(**kwargs):
   return results
 
 def get_area(postcode):
-  return postcode[:-3].strip().upper()
+  return re.split(r'[\d\s]', postcode)[0]

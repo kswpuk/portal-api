@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+import re
 
 # Configure logging
 logger = logging.getLogger()
@@ -38,7 +39,6 @@ def handler(event, context):
 
   statusCount = Counter([member['status'] for member in portal_members])
   timeCount = Counter([calculate_years(member['joinDate']) for member in portal_members])
-  postcodeCount = Counter([get_area(member['postcode']) for member in portal_members])
 
   ageCount = {
     "UNDER_18": 0,
@@ -49,12 +49,23 @@ def handler(event, context):
     "55_65": 0,
     "OVER_65": 0
   }
+  ageActiveCount = ageCount.copy()
+  ageInactiveCount = ageCount.copy()
+  postcodesActive = []
 
-  oldestDate = datetime.date.today()
+  today = datetime.date.today()
+
+  oldestDate = today
   newestDate = datetime.date.fromisoformat("1900-01-01")
 
   for member in portal_members:
-    ageCount[group_age(calculate_years(member['dateOfBirth']))] += 1
+    ageGroup = group_age(calculate_years(member['dateOfBirth']))
+    ageCount[ageGroup] += 1
+    if member['status'] == "ACTIVE":
+      ageActiveCount[ageGroup] += 1
+      postcodesActive.append(get_area(member['postcode']))
+    elif member['status'] == "INACTIVE":
+      ageInactiveCount[ageGroup] += 1
     
     joinDate = datetime.date.fromisoformat(member['joinDate'])
     if joinDate > newestDate:
@@ -72,10 +83,14 @@ def handler(event, context):
         "status": statusCount,
         "time": timeCount,
         "age": ageCount,
-        "postcode": postcodeCount
+        "ageActive": ageActiveCount,
+        "ageInactive": ageInactiveCount,
+        "postcodesActive": Counter(postcodesActive)
       },
       "newest": newestDate.isoformat(),
-      "oldest": oldestDate.isoformat()
+      "newestDays": (today - newestDate).days,
+      "oldest": oldestDate.isoformat(),
+      "oldestDays":  (today - oldestDate).days
     })
   }
 
@@ -133,4 +148,4 @@ def group_age(age):
     return "OVER_65"
 
 def get_area(postcode):
-  return postcode[:-3].strip().upper()
+  return re.split(r'[\d\s]', postcode)[0]

@@ -83,6 +83,7 @@ resource "aws_api_gateway_deployment" "portal" {
       jsonencode(module.events_seriesId_eventId_allocate_id_DELETE),
       jsonencode(module.events_seriesId_eventId_register_id_POST),
       jsonencode(module.events_report_GET),
+      jsonencode(module.events_report_attendance_GET),
 
       jsonencode(module.payments_membership_session_GET),
 
@@ -139,6 +140,7 @@ resource "aws_api_gateway_deployment" "portal" {
     module.events_seriesId_eventId_allocate_id_DELETE,
     module.events_seriesId_eventId_register_id_POST,
     module.events_report_GET,
+    module.events_report_attendance_GET,
 
     module.payments_membership_session_GET,
 
