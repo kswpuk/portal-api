@@ -174,6 +174,7 @@ def handler(event, context):
     attendanceLimit = None
     validationErrors.append("Attendance limit must be numeric")
   
+  allocationOnPayment = (event.get("allocationOnPayment", False) == True)
 
   if event.get("weightingCriteria") is None:
     weightingCriteria = {}
@@ -224,6 +225,7 @@ def handler(event, context):
         "payee": payee,
         "attendanceCriteria": attendanceCriteria,
         "attendanceLimit": attendanceLimit,
+        "allocationOnPayment": allocationOnPayment,
         "weightingCriteria": weightingCriteria
       }
     }

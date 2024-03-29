@@ -91,7 +91,7 @@ def handler(event, context):
         "eventSeriesId": eventSeriesId,
         "eventId": eventId
     },
-    UpdateExpression="SET details=:details, #location=:location, postcode=:postcode, locationType=:locationType, registrationDate=:registrationDate, startDate=:startDate, endDate=:endDate, eventUrl=:eventUrl, cost=:cost, payee=:payee, attendanceCriteria=:attendanceCriteria, attendanceLimit=:attendanceLimit, weightingCriteria=:weightingCriteria",
+    UpdateExpression="SET details=:details, #location=:location, postcode=:postcode, locationType=:locationType, registrationDate=:registrationDate, startDate=:startDate, endDate=:endDate, eventUrl=:eventUrl, cost=:cost, payee=:payee, attendanceCriteria=:attendanceCriteria, attendanceLimit=:attendanceLimit, allocationOnPayment=:allocationOnPayment, weightingCriteria=:weightingCriteria",
     ExpressionAttributeNames={
       "#location": "location"
     },
@@ -108,6 +108,7 @@ def handler(event, context):
       ":payee": validationResult["event"]["payee"],
       ":attendanceCriteria": validationResult["event"]["attendanceCriteria"],
       ":attendanceLimit": validationResult["event"]["attendanceLimit"],
+      ":allocationOnPayment": validationResult["event"]["allocationOnPayment"],
       ":weightingCriteria": validationResult["event"]["weightingCriteria"]
     },
     ReturnValues = "NONE"
