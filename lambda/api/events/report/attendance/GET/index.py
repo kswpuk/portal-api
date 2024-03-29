@@ -15,11 +15,13 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 EVENT_ALLOCATIONS_INDEX = os.getenv('EVENT_ALLOCATIONS_INDEX')
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
 EVENT_INSTANCE_TABLE = os.getenv('EVENT_INSTANCE_TABLE')
+EVENT_SERIES_TABLE =  os.getenv('EVENT_SERIES_TABLE')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
 
 logger.info(f"EVENT_ALLOCATIONS_INDEX = {EVENT_ALLOCATIONS_INDEX}")
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_INSTANCE_TABLE = {EVENT_INSTANCE_TABLE}")
+logger.info(f"EVENT_SERIES_TABLE = {EVENT_SERIES_TABLE}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
 
 headers = {
@@ -33,9 +35,11 @@ dynamodb = boto3.resource('dynamodb')
 
 event_allocations_table = dynamodb.Table(EVENT_ALLOCATIONS_TABLE)
 event_instance_table = dynamodb.Table(EVENT_INSTANCE_TABLE)
+event_series_table = dynamodb.Table(EVENT_SERIES_TABLE)
 members_table = dynamodb.Table(MEMBERS_TABLE)
 
 event_start_dates = {}
+event_types = {}
 
 def handler(event, context):
   # Get ACTIVE members
@@ -94,6 +98,10 @@ def handler(event, context):
     }
 
     for allocation in allocations:
+      event_type = get_event_type(allocation["combinedEventId"])
+      if event_type != "event":
+        continue
+
       start_date = get_start_date(allocation["combinedEventId"])
       if start_date < ymd1Yr or start_date > todayIso:
         continue
@@ -168,3 +176,24 @@ def get_start_date(combined_event_id):
   event_start_dates[combined_event_id] = instance["startDate"]
 
   return instance["startDate"]
+
+
+def get_event_type(combined_event_id):
+  event_series_id, _ = combined_event_id.split("/", 1)
+
+  if event_series_id in event_types:
+    return event_types[event_series_id]
+
+  try:
+    instance = event_series_table.get_item(
+      Key={
+        "eventSeriesId": event_series_id,
+      }
+    )['Item']
+  except Exception as e:
+    logger.error(f"Unable to get event series (Event Series = {event_series_id}) from {EVENT_SERIES_TABLE}: {str(e)}")
+    raise e
+  
+  event_types[event_series_id] = instance["type"]
+
+  return instance["type"]
