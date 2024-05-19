@@ -1,20 +1,22 @@
+from aws_lambda_powertools import Logger
+
 import boto3
 from collections import Counter
 import datetime
 import json
-import logging
 import os
 import re
 
 # Configure logging
-logger = logging.getLogger()
-logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+logger = Logger()
 
 APPLICATIONS_TABLE = os.getenv('APPLICATIONS_TABLE')
 REFERENCES_TABLE = os.getenv('REFERENCES_TABLE')
 
-logger.info(f"APPLICATIONS_TABLE = {APPLICATIONS_TABLE}")
-logger.info(f"REFERENCES_TABLE = {REFERENCES_TABLE}")
+logger.info("Initialising Lambda", extra={"environment_variables": {
+  "APPLICATIONS_TABLE": APPLICATIONS_TABLE,
+  "REFERENCES_TABLE": REFERENCES_TABLE,
+}})
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -33,7 +35,7 @@ def handler(event, context):
   try:
     applications = scan_applications()
   except Exception as e:
-    logger.error(f"Unable to get applications: {str(e)}")
+    logger.error("Unable to scan applications table", extra={"error": str(e)})
     return {
       "statusCode": 500,
       "headers": headers,

@@ -4,7 +4,7 @@ resource "aws_api_gateway_account" "portal" {
 }
 
 resource "aws_iam_role" "agw_cloudwatch" {
-  name = "${var.prefix}-api_gateway_cloudwatch-role"
+  name               = "${var.prefix}-api_gateway_cloudwatch-role"
   assume_role_policy = data.aws_iam_policy_document.agw_assume_role_policy.json
 }
 
@@ -30,8 +30,8 @@ EOF
 
 # API Gateway
 resource "aws_api_gateway_rest_api" "portal" {
-  name = "${var.prefix}-api"
-  description = "REST API for KSWP Portal"
+  name               = "${var.prefix}-api"
+  description        = "REST API for KSWP Portal"
   binary_media_types = ["image/*", "multipart/form-data"]
 }
 
@@ -168,7 +168,7 @@ resource "aws_api_gateway_authorizer" "portal" {
 # IAM
 
 resource "aws_iam_role" "auth_invocation_role" {
-  name = "${var.prefix}-agw_invoke_auth-role"
+  name               = "${var.prefix}-agw_invoke_auth-role"
   assume_role_policy = data.aws_iam_policy_document.agw_assume_role_policy.json
 }
 
@@ -192,7 +192,7 @@ data "aws_iam_policy_document" "agw_assume_role_policy" {
 
 data "aws_iam_policy_document" "agw_invoke_lambda_policy" {
   statement {
-    actions = ["lambda:InvokeFunction"]
-    resources = [ module.auth_lambda.lambda_function_arn ]
+    actions   = ["lambda:InvokeFunction"]
+    resources = [module.auth_lambda.lambda_function_arn]
   }
 }

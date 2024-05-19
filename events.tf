@@ -1,8 +1,8 @@
 # DynamoDB
 resource "aws_dynamodb_table" "event_series_table" {
-  name = "${var.prefix}-event_series"
+  name         = "${var.prefix}-event_series"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "eventSeriesId"
+  hash_key     = "eventSeriesId"
 
   attribute {
     name = "eventSeriesId"
@@ -11,10 +11,10 @@ resource "aws_dynamodb_table" "event_series_table" {
 }
 
 resource "aws_dynamodb_table" "event_instance_table" {
-  name = "${var.prefix}-event_instances"
+  name         = "${var.prefix}-event_instances"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "eventSeriesId"
-  range_key = "eventId"
+  hash_key     = "eventSeriesId"
+  range_key    = "eventId"
 
   attribute {
     name = "eventSeriesId"
@@ -26,15 +26,15 @@ resource "aws_dynamodb_table" "event_instance_table" {
     type = "S"
   }
 
-  stream_enabled = true
+  stream_enabled   = true
   stream_view_type = "NEW_IMAGE"
 }
 
 resource "aws_dynamodb_table" "event_allocation_table" {
-  name = "${var.prefix}-event_allocations"
+  name         = "${var.prefix}-event_allocations"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "combinedEventId"
-  range_key = "membershipNumber"
+  hash_key     = "combinedEventId"
+  range_key    = "membershipNumber"
 
   attribute {
     name = "combinedEventId"
@@ -47,12 +47,12 @@ resource "aws_dynamodb_table" "event_allocation_table" {
   }
 
   global_secondary_index {
-    name               = "${var.prefix}-member_event_allocations"
-    hash_key           = "membershipNumber"
-    projection_type    = "ALL"
+    name            = "${var.prefix}-member_event_allocations"
+    hash_key        = "membershipNumber"
+    projection_type = "ALL"
   }
-  
-  stream_enabled = true
+
+  stream_enabled   = true
   stream_view_type = "NEW_IMAGE"
 }
 
@@ -88,15 +88,17 @@ module "sync_events" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/sync/events"
+      path             = "${path.module}/lambda/sync/events"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-sync_events-lambda"
-  description = "Send out event notifications and tidy up after event deletion"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Send out event notifications and tidy up after event deletion"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -109,7 +111,7 @@ module "sync_events" {
         "dynamodb:GetShardIterator",
         "dynamodb:ListStreams"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_instance_table.stream_arn
       ]
     }
@@ -119,7 +121,7 @@ module "sync_events" {
         "dynamodb:Query",
         "dynamodb:DeleteItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_allocation_table.arn
       ]
     }
@@ -128,7 +130,7 @@ module "sync_events" {
       actions = [
         "dynamodb:GetItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_series_table.arn
       ]
     }
@@ -137,7 +139,7 @@ module "sync_events" {
       actions = [
         "dynamodb:Query"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.members_table.arn,
         "${aws_dynamodb_table.members_table.arn}/index/*"
       ]
@@ -158,17 +160,17 @@ module "sync_events" {
 
   publish = true
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
-    ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.name
+    ALLOCATIONS_TABLE    = aws_dynamodb_table.event_allocation_table.name
     EVENT_ADDED_TEMPLATE = aws_ses_template.event_added.name
-    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
-    EVENTS_EMAIL = var.events_email
+    EVENT_SERIES_TABLE   = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL         = var.events_email
     MEMBERS_STATUS_INDEX = "${var.prefix}-membership_status"
-    MEMBERS_TABLE = aws_dynamodb_table.members_table.name
-    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+    MEMBERS_TABLE        = aws_dynamodb_table.members_table.name
+    PORTAL_DOMAIN        = aws_route53_record.portal.fqdn
   }
 }
 
@@ -184,15 +186,17 @@ module "sync_allocations" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/sync/allocations"
+      path             = "${path.module}/lambda/sync/allocations"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-sync_allocations-lambda"
-  description = "Send out allocation notifications"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Send out allocation notifications"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -205,7 +209,7 @@ module "sync_allocations" {
         "dynamodb:GetShardIterator",
         "dynamodb:ListStreams"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_allocation_table.stream_arn
       ]
     }
@@ -214,7 +218,7 @@ module "sync_allocations" {
       actions = [
         "dynamodb:GetItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_series_table.arn
       ]
     }
@@ -223,7 +227,7 @@ module "sync_allocations" {
       actions = [
         "dynamodb:GetItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.members_table.arn
       ]
     }
@@ -243,14 +247,14 @@ module "sync_allocations" {
 
   publish = true
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
     EVENT_ALLOCATION_TEMPLATE = aws_ses_template.event_allocation.name
-    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
-    EVENTS_EMAIL = var.events_email
-    MEMBERS_TABLE = aws_dynamodb_table.members_table.name
+    EVENT_SERIES_TABLE        = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL              = var.events_email
+    MEMBERS_TABLE             = aws_dynamodb_table.members_table.name
   }
 }
 
@@ -267,15 +271,17 @@ module "event_allocation_reminder" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/cron/event_allocation_reminder"
+      path             = "${path.module}/lambda/cron/event_allocation_reminder"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-event_allocation_reminder-lambda"
-  description = "Event allocation reminder"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Event allocation reminder"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -285,7 +291,7 @@ module "event_allocation_reminder" {
       actions = [
         "dynamodb:GetItem",
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_series_table.arn
       ]
     }
@@ -294,7 +300,7 @@ module "event_allocation_reminder" {
       actions = [
         "dynamodb:Scan",
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_instance_table.arn
       ]
     }
@@ -320,21 +326,21 @@ module "event_allocation_reminder" {
     }
   }
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
     ALLOCATION_REMINDER_TEMPLATE = aws_ses_template.event_allocation_reminder.name
-    EVENT_INSTANCE_TABLE =  aws_dynamodb_table.event_instance_table.name
-    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
-    EVENTS_EMAIL = var.events_email
-    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+    EVENT_INSTANCE_TABLE         = aws_dynamodb_table.event_instance_table.name
+    EVENT_SERIES_TABLE           = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL                 = var.events_email
+    PORTAL_DOMAIN                = aws_route53_record.portal.fqdn
   }
 }
 
 resource "aws_cloudwatch_event_target" "event_allocation_reminder" {
   rule = aws_cloudwatch_event_rule.daily_0700.name
-  arn = module.event_allocation_reminder.lambda_function_arn
+  arn  = module.event_allocation_reminder.lambda_function_arn
 }
 
 
@@ -345,15 +351,17 @@ module "event_reminder" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/cron/event_reminder"
+      path             = "${path.module}/lambda/cron/event_reminder"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-event_reminder-lambda"
-  description = "Event reminder"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Event reminder"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -363,7 +371,7 @@ module "event_reminder" {
       actions = [
         "dynamodb:GetItem",
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_series_table.arn
       ]
     }
@@ -372,7 +380,7 @@ module "event_reminder" {
       actions = [
         "dynamodb:Scan",
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_instance_table.arn
       ]
     }
@@ -398,19 +406,19 @@ module "event_reminder" {
     }
   }
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
-    EVENT_INSTANCE_TABLE =  aws_dynamodb_table.event_instance_table.name
+    EVENT_INSTANCE_TABLE    = aws_dynamodb_table.event_instance_table.name
     EVENT_REMINDER_TEMPLATE = aws_ses_template.event_reminder.name
-    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.name
-    EVENTS_EMAIL = var.events_email
-    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
+    EVENT_SERIES_TABLE      = aws_dynamodb_table.event_series_table.name
+    EVENTS_EMAIL            = var.events_email
+    PORTAL_DOMAIN           = aws_route53_record.portal.fqdn
   }
 }
 
 resource "aws_cloudwatch_event_target" "event_reminder" {
   rule = aws_cloudwatch_event_rule.monthly.name
-  arn = module.event_reminder.lambda_function_arn
+  arn  = module.event_reminder.lambda_function_arn
 }

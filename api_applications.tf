@@ -1,8 +1,8 @@
 # /applications
 
 module "applications" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = aws_api_gateway_rest_api.portal.root_resource_id
@@ -10,38 +10,47 @@ module "applications" {
 }
 
 module "applications_GET" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications.resource_path
+  path          = module.applications.resource_path
 
-  http_method   = "GET"
+  http_method = "GET"
 
-  prefix = var.prefix
-  name = "applications"
+  prefix      = var.prefix
+  name        = "applications"
   description = "List applications"
 
   lambda_path = "${path.module}/lambda/api/applications/GET"
 
   lambda_policy = {
     dynamodb = {
-      actions = [ "dynamodb:Scan" ]
-      resources = [ aws_dynamodb_table.applications_table.arn, aws_dynamodb_table.references_table.arn ]
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.applications_table.arn, aws_dynamodb_table.references_table.arn]
     }
   }
-  
+
   lambda_env = {
-    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.id
-    REFERENCES_TABLE = aws_dynamodb_table.references_table.id
+    APPLICATIONS_TABLE           = aws_dynamodb_table.applications_table.id
+    REFERENCES_TABLE             = aws_dynamodb_table.references_table.id
+    POWERTOOLS_METRICS_NAMESPACE = var.prefix
+    POWERTOOLS_SERVICE_NAME      = "${var.prefix}-applications"
   }
+
+  lambda_layers = [
+    local.powertools_layer_arn
+  ]
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 # /applications/{id}
 
 module "applications_id" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications.resource_id
@@ -49,23 +58,23 @@ module "applications_id" {
 }
 
 module "applications_id_GET" {
-  source = "./api_method_dynamodb"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
-  rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id.resource_path
+  source     = "./api_method_dynamodb"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
-  http_method   = "GET"
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path          = module.applications_id.resource_path
+
+  http_method = "GET"
 
   prefix = var.prefix
-  name = "applications_id"
+  name   = "applications_id"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  dynamodb_action = "Query"
+  dynamodb_action    = "Query"
   dynamodb_table_arn = aws_dynamodb_table.applications_table.arn
 
-  
+
   request_template = <<END
 {
   "TableName": "${aws_dynamodb_table.applications_table.name}",
@@ -82,82 +91,91 @@ END
 }
 
 module "applications_id_POST" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id.resource_path
+  path          = module.applications_id.resource_path
 
-  http_method   = "POST"
+  http_method = "POST"
 
-  prefix = var.prefix
-  name = "applications_id"
+  prefix      = var.prefix
+  name        = "applications_id"
   description = "Submit Application"
 
   lambda_path = "${path.module}/lambda/api/applications/{id}/POST"
 
   lambda_policy = {
     dynamodb_put = {
-      actions = [ "dynamodb:PutItem" ]
-      resources = [ 
+      actions = ["dynamodb:PutItem"]
+      resources = [
         aws_dynamodb_table.applications_table.arn,
         aws_dynamodb_table.references_table.arn
       ]
     }
 
     dynamodb_applications_get = {
-      actions = [ "dynamodb:GetItem" ]
-      resources = [ aws_dynamodb_table.applications_table.arn ]
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.applications_table.arn]
       condition = {
         forallvalues_condition = {
-          test = "ForAllValues:StringEquals"
+          test     = "ForAllValues:StringEquals"
           variable = "dynamodb:Attributes"
-          values = ["membershipNumber"]
+          values   = ["membershipNumber"]
         }
         stringequals_condition = {
-          test = "StringEquals"
+          test     = "StringEquals"
           variable = "dynamodb:Select"
-          values = ["SPECIFIC_ATTRIBUTES"]
+          values   = ["SPECIFIC_ATTRIBUTES"]
         }
       }
     }
 
     dynamodb_members = {
-      actions = [ "dynamodb:GetItem" ]
-      resources = [ aws_dynamodb_table.members_table.arn ]
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.members_table.arn]
       condition = {
         forallvalues_condition = {
-          test = "ForAllValues:StringEquals"
+          test     = "ForAllValues:StringEquals"
           variable = "dynamodb:Attributes"
-          values = ["membershipNumber"]
+          values   = ["membershipNumber"]
         }
         stringequals_condition = {
-          test = "StringEquals"
+          test     = "StringEquals"
           variable = "dynamodb:Select"
-          values = ["SPECIFIC_ATTRIBUTES"]
+          values   = ["SPECIFIC_ATTRIBUTES"]
         }
       }
     }
 
     s3 = {
-      actions = [ "s3:PutObject" ]
-      resources = [ "${aws_s3_bucket.applications_evidence_bucket.arn}/*.jpg" ]
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.applications_evidence_bucket.arn}/*.jpg"]
     }
   }
-  
+
   lambda_env = {
-    APPLICATIONS_TABLE_NAME = aws_dynamodb_table.applications_table.id
-    MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.id
-    REFERENCES_TABLE_NAME = aws_dynamodb_table.references_table.id
-    EVIDENCE_BUCKET_NAME = aws_s3_bucket.applications_evidence_bucket.id
+    APPLICATIONS_TABLE_NAME      = aws_dynamodb_table.applications_table.id
+    MEMBERS_TABLE_NAME           = aws_dynamodb_table.members_table.id
+    REFERENCES_TABLE_NAME        = aws_dynamodb_table.references_table.id
+    EVIDENCE_BUCKET_NAME         = aws_s3_bucket.applications_evidence_bucket.id
+    POWERTOOLS_METRICS_NAMESPACE = var.prefix
+    POWERTOOLS_SERVICE_NAME      = "${var.prefix}-applications"
   }
+
+  lambda_layers = [
+    local.powertools_layer_arn
+  ]
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 # /applications/{id}/approve
 
 module "applications_id_approve" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -165,16 +183,16 @@ module "applications_id_approve" {
 }
 
 module "applications_id_approve_POST" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_approve.resource_path
+  path          = module.applications_id_approve.resource_path
 
-  http_method   = "POST"
+  http_method = "POST"
 
-  prefix = var.prefix
-  name = "applications_id_approve"
+  prefix      = var.prefix
+  name        = "applications_id_approve"
   description = "Approve Application"
 
   lambda_path = "${path.module}/lambda/api/applications/{id}/approve/POST"
@@ -184,7 +202,7 @@ module "applications_id_approve_POST" {
       actions = [
         "dynamodb:PutItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.members_table.arn
       ]
     }
@@ -199,18 +217,27 @@ module "applications_id_approve_POST" {
       ]
     }
   }
-  
+
   lambda_env = {
-    APPLICATIONS_TABLE_NAME = aws_dynamodb_table.applications_table.id
-    MEMBERS_TABLE_NAME = aws_dynamodb_table.members_table.id
+    APPLICATIONS_TABLE_NAME      = aws_dynamodb_table.applications_table.id
+    MEMBERS_TABLE_NAME           = aws_dynamodb_table.members_table.id
+    POWERTOOLS_METRICS_NAMESPACE = var.prefix
+    POWERTOOLS_SERVICE_NAME      = "${var.prefix}-applications"
   }
+
+  lambda_layers = [
+    local.powertools_layer_arn
+  ]
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 # /applications/{id}/evidence
 
 module "applications_id_evidence" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -218,16 +245,16 @@ module "applications_id_evidence" {
 }
 
 module "applications_id_evidence_GET" {
-  source = "./api_method_s3"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_s3"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_evidence.resource_path
+  path          = module.applications_id_evidence.resource_path
 
   http_method = "GET"
 
   prefix = var.prefix
-  name = "applications_id_evidence"
+  name   = "applications_id_evidence"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
@@ -237,8 +264,8 @@ module "applications_id_evidence_GET" {
 
 # /applications/{id}/head
 module "applications_id_head" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -246,21 +273,21 @@ module "applications_id_head" {
 }
 
 module "applications_id_head_GET" {
-  source = "./api_method_dynamodb"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
-  rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_head.resource_path
+  source     = "./api_method_dynamodb"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
-  http_method   = "GET"
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path          = module.applications_id_head.resource_path
+
+  http_method = "GET"
 
   prefix = var.prefix
-  name = "applications_id_head"
+  name   = "applications_id_head"
 
-  dynamodb_action = "Query"
+  dynamodb_action    = "Query"
   dynamodb_table_arn = aws_dynamodb_table.applications_table.arn
 
-  
+
   request_template = <<END
 {
   "TableName": "${aws_dynamodb_table.applications_table.name}",
@@ -280,8 +307,8 @@ END
 # /applications/{id}/references
 
 module "applications_id_references" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -289,23 +316,23 @@ module "applications_id_references" {
 }
 
 module "applications_id_references_GET" {
-  source = "./api_method_dynamodb"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
-  rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_references.resource_path
+  source     = "./api_method_dynamodb"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
-  http_method   = "GET"
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path          = module.applications_id_references.resource_path
+
+  http_method = "GET"
 
   prefix = var.prefix
-  name = "applications_id_references"
+  name   = "applications_id_references"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  dynamodb_action = "Query"
+  dynamodb_action    = "Query"
   dynamodb_table_arn = aws_dynamodb_table.references_table.arn
 
-  
+
   request_template = <<END
 {
   "TableName": "${aws_dynamodb_table.references_table.name}",
@@ -323,74 +350,83 @@ END
 }
 
 module "applications_id_references_POST" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_references.resource_path
+  path          = module.applications_id_references.resource_path
 
-  http_method   = "POST"
+  http_method = "POST"
 
-  prefix = var.prefix
-  name = "applications_id_references"
+  prefix      = var.prefix
+  name        = "applications_id_references"
   description = "Submit Reference"
 
   lambda_path = "${path.module}/lambda/api/applications/{id}/references/POST"
 
   lambda_policy = {
     dynamodb_put = {
-      actions = [ "dynamodb:PutItem" ]
-      resources = [ 
+      actions = ["dynamodb:PutItem"]
+      resources = [
         aws_dynamodb_table.references_table.arn
       ]
     }
 
     dynamodb_applications_get = {
-      actions = [ "dynamodb:GetItem" ]
-      resources = [ aws_dynamodb_table.applications_table.arn ]
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.applications_table.arn]
       condition = {
         forallvalues_condition = {
-          test = "ForAllValues:StringEquals"
+          test     = "ForAllValues:StringEquals"
           variable = "dynamodb:Attributes"
-          values = ["membershipNumber"]
+          values   = ["membershipNumber"]
         }
         stringequals_condition = {
-          test = "StringEquals"
+          test     = "StringEquals"
           variable = "dynamodb:Select"
-          values = ["SPECIFIC_ATTRIBUTES"]
+          values   = ["SPECIFIC_ATTRIBUTES"]
         }
       }
     }
 
     dynamodb_references_get = {
-      actions = [ "dynamodb:GetItem" ]
-      resources = [ aws_dynamodb_table.references_table.arn ]
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.references_table.arn]
       condition = {
         forallvalues_condition = {
-          test = "ForAllValues:StringEquals"
+          test     = "ForAllValues:StringEquals"
           variable = "dynamodb:Attributes"
-          values = ["membershipNumber", "referenceEmail", "relationship"]
+          values   = ["membershipNumber", "referenceEmail", "relationship"]
         }
         stringequals_condition = {
-          test = "StringEquals"
+          test     = "StringEquals"
           variable = "dynamodb:Select"
-          values = ["SPECIFIC_ATTRIBUTES"]
+          values   = ["SPECIFIC_ATTRIBUTES"]
         }
       }
     }
   }
-  
+
   lambda_env = {
-    APPLICATIONS_TABLE_NAME = aws_dynamodb_table.applications_table.id
-    REFERENCES_TABLE_NAME = aws_dynamodb_table.references_table.id
+    APPLICATIONS_TABLE           = aws_dynamodb_table.applications_table.id
+    REFERENCES_TABLE             = aws_dynamodb_table.references_table.id
+    POWERTOOLS_METRICS_NAMESPACE = var.prefix
+    POWERTOOLS_SERVICE_NAME      = "${var.prefix}-applications"
   }
+
+  lambda_layers = [
+    local.powertools_layer_arn
+  ]
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 # /applications/{id}/references/{email}
 
 module "applications_id_references_email" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id_references.resource_id
@@ -398,23 +434,23 @@ module "applications_id_references_email" {
 }
 
 module "applications_id_references_email_GET" {
-  source = "./api_method_dynamodb"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
-  rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_references_email.resource_path
+  source     = "./api_method_dynamodb"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
-  http_method   = "GET"
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path          = module.applications_id_references_email.resource_path
+
+  http_method = "GET"
 
   prefix = var.prefix
-  name = "applications_id_references_email"
+  name   = "applications_id_references_email"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  dynamodb_action = "Query"
+  dynamodb_action    = "Query"
   dynamodb_table_arn = aws_dynamodb_table.references_table.arn
 
-  
+
   request_template = <<END
 {
   "TableName": "${aws_dynamodb_table.references_table.name}",
@@ -436,8 +472,8 @@ END
 # /applications/{id}/references/{email}/accept
 
 module "applications_id_references_email_accept" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id_references_email.resource_id
@@ -445,23 +481,23 @@ module "applications_id_references_email_accept" {
 }
 
 module "applications_id_references_email_accept_PATCH" {
-  source = "./api_method_dynamodb"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
-  rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_references_email_accept.resource_path
+  source     = "./api_method_dynamodb"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
-  http_method   = "PATCH"
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path          = module.applications_id_references_email_accept.resource_path
+
+  http_method = "PATCH"
 
   prefix = var.prefix
-  name = "applications_id_references_email_accept"
+  name   = "applications_id_references_email_accept"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  dynamodb_action = "UpdateItem"
+  dynamodb_action    = "UpdateItem"
   dynamodb_table_arn = aws_dynamodb_table.references_table.arn
 
-  
+
   request_template = <<END
 {
   "TableName": "${aws_dynamodb_table.references_table.name}",
@@ -486,8 +522,8 @@ END
 # /applications/{id}/status
 
 module "applications_id_status" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications_id.resource_id
@@ -495,16 +531,16 @@ module "applications_id_status" {
 }
 
 module "applications_id_status_POST" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_id_status.resource_path
+  path          = module.applications_id_status.resource_path
 
-  http_method   = "POST"
+  http_method = "POST"
 
-  prefix = var.prefix
-  name = "applications_id_status"
+  prefix      = var.prefix
+  name        = "applications_id_status"
   description = "Get application status"
 
   lambda_path = "${path.module}/lambda/api/applications/{id}/status/POST"
@@ -514,19 +550,19 @@ module "applications_id_status_POST" {
       actions = [
         "dynamodb:GetItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.applications_table.arn
       ]
       condition = {
         forallvalues_condition = {
-          test = "ForAllValues:StringEquals"
+          test     = "ForAllValues:StringEquals"
           variable = "dynamodb:Attributes"
-          values = ["membershipNumber", "dateOfBirth", "submittedAt"]
+          values   = ["membershipNumber", "dateOfBirth", "submittedAt"]
         }
         stringequals_condition = {
-          test = "StringEquals"
+          test     = "StringEquals"
           variable = "dynamodb:Select"
-          values = ["SPECIFIC_ATTRIBUTES"]
+          values   = ["SPECIFIC_ATTRIBUTES"]
         }
       }
     }
@@ -540,30 +576,39 @@ module "applications_id_status_POST" {
       ]
       condition = {
         forallvalues_condition = {
-          test = "ForAllValues:StringEquals"
+          test     = "ForAllValues:StringEquals"
           variable = "dynamodb:Attributes"
-          values = ["membershipNumber", "referenceEmail", "accepted", "relationship", "howLong"]
+          values   = ["membershipNumber", "referenceEmail", "accepted", "relationship", "howLong"]
         }
         stringequals_condition = {
-          test = "StringEquals"
+          test     = "StringEquals"
           variable = "dynamodb:Select"
-          values = ["SPECIFIC_ATTRIBUTES"]
+          values   = ["SPECIFIC_ATTRIBUTES"]
         }
       }
     }
   }
-  
+
   lambda_env = {
-    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.id
-    REFERENCES_TABLE = aws_dynamodb_table.references_table.id
+    APPLICATIONS_TABLE           = aws_dynamodb_table.applications_table.id
+    REFERENCES_TABLE             = aws_dynamodb_table.references_table.id
+    POWERTOOLS_METRICS_NAMESPACE = var.prefix
+    POWERTOOLS_SERVICE_NAME      = "${var.prefix}-applications"
   }
+
+  lambda_layers = [
+    local.powertools_layer_arn
+  ]
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 # /applications/report
 
 module "applications_report" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.applications.resource_id
@@ -571,16 +616,16 @@ module "applications_report" {
 }
 
 module "applications_report_GET" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.applications_report.resource_path
+  path          = module.applications_report.resource_path
 
   http_method = "GET"
 
-  prefix = var.prefix
-  name = "applications_report"
+  prefix      = var.prefix
+  name        = "applications_report"
   description = "Generate applications report"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
@@ -589,7 +634,7 @@ module "applications_report_GET" {
 
   lambda_policy = {
     applications = {
-      actions = [ 
+      actions = [
         "dynamodb:GetItem",
         "dynamodb:Scan"
       ]
@@ -599,9 +644,18 @@ module "applications_report_GET" {
       ]
     }
   }
-  
+
   lambda_env = {
-    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.id,
-    REFERENCES_TABLE = aws_dynamodb_table.references_table.id
+    APPLICATIONS_TABLE           = aws_dynamodb_table.applications_table.id,
+    REFERENCES_TABLE             = aws_dynamodb_table.references_table.id
+    POWERTOOLS_METRICS_NAMESPACE = var.prefix
+    POWERTOOLS_SERVICE_NAME      = "${var.prefix}-applications"
   }
+
+  lambda_layers = [
+    local.powertools_layer_arn
+  ]
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }

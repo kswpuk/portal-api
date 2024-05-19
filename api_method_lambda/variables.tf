@@ -38,7 +38,7 @@ variable "lambda_handler" {
 
 variable "lambda_runtime" {
   type = string
-  default = "python3.9"
+  default = "python3.12"
 }
 
 variable "lambda_timeout" {
@@ -59,4 +59,14 @@ variable "lambda_env" {
 variable "lambda_policy" {
   type = any
   default = {}
+}
+
+variable "lambda_layers" {
+  type = list(string)
+  default = [  ]
+}
+
+variable "lambda_architecture" {
+  type = list(string)
+  default = [ "x86_64" ]
 }

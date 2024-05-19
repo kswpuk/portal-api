@@ -1,22 +1,33 @@
+from aws_lambda_powertools import Logger, Metrics
+from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools.utilities.data_classes import event_source, APIGatewayProxyEvent
+from aws_lambda_powertools.utilities.typing import LambdaContext
+
 import base64
 import boto3
 import datetime
 import io
 import json
-import logging
 import os
 import re
 import time
 from validate_email import validate_email
 
-logger = logging.getLogger()
-logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+# Configure logging
+logger = Logger()
+metrics = Metrics()
 
-APPLICATIONS_TABLE_NAME = os.getenv('APPLICATIONS_TABLE_NAME')
-logger.info(f"DynamoDB Application Table Name: {APPLICATIONS_TABLE_NAME}")
+APPLICATIONS_TABLE = os.getenv('APPLICATIONS_TABLE')
+logger.info(f"DynamoDB Application Table Name: {APPLICATIONS_TABLE}")
 
-REFERENCES_TABLE_NAME = os.getenv('REFERENCES_TABLE_NAME')
-logger.info(f"DynamoDB References Table Name: {REFERENCES_TABLE_NAME}")
+REFERENCES_TABLE = os.getenv('REFERENCES_TABLE')
+logger.info(f"DynamoDB References Table Name: {REFERENCES_TABLE}")
+
+logger.info("Initialising Lambda", extra={"environment_variables": {
+  "APPLICATIONS_TABLE": APPLICATIONS_TABLE,
+  "REFERENCES_TABLE": REFERENCES_TABLE
+}})
+
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -25,18 +36,20 @@ headers = {
 }
 
 dynamodb = boto3.resource('dynamodb')
-applications_table = dynamodb.Table(APPLICATIONS_TABLE_NAME)
-references_table = dynamodb.Table(REFERENCES_TABLE_NAME)
+applications_table = dynamodb.Table(APPLICATIONS_TABLE)
+references_table = dynamodb.Table(REFERENCES_TABLE)
 
-def handler(event, context):
-  logger.debug(event)
+@event_source(data_class=APIGatewayProxyEvent)
+@metrics.log_metrics
+def handler(event: APIGatewayProxyEvent, context: LambdaContext):
+  membershipNumber = str(event.path_parameters['id']).strip().lstrip('0')
+  reference = event.json_body
 
-  membershipNumber = event['pathParameters']['id']
-  reference = json.loads(event['body'])
+  logger.append_keys(membership_number=membershipNumber)
 
   # Check there is an application
 
-  logger.debug(f"Confirming {membershipNumber} has submitted an application")
+  logger.debug("Confirming application exists")
 
   applications_response = applications_table.get_item(
     Key={
@@ -76,11 +89,11 @@ def handler(event, context):
       })
     }
 
-  logger.info(f"Submitting reference for {membershipNumber}")
+  logger.info("New reference request received")
 
   # Do validation
 
-  logger.debug(f"Validating input for reference for {membershipNumber}...")
+  logger.debug("Validating input")
 
   validationErrors = []
 
@@ -149,7 +162,7 @@ def handler(event, context):
     validationErrors.append("Respect for Others must be between 1 and 5")
 
   if len(validationErrors) > 0:
-    logger.warning(f"{len(validationErrors)} errors found during validation of reference for {membershipNumber}: {validationErrors}")
+    logger.warning("Validation of reference failed", extra={"validation_error_count": len(validationErrors), "validation_errors": validationErrors})
     return {
       "statusCode": 422,
       "headers": headers,
@@ -159,10 +172,9 @@ def handler(event, context):
       })
     }
   else:
-    logger.info(f"No errors found during validation of reference for {membershipNumber}")
+    logger.info(f"Validation of reference succeeded")
 
   # Put records in DynamoDB
-  logger.debug(f"Saving reference for {membershipNumber}...")
 
   references_table.put_item(
     Item={
@@ -188,7 +200,8 @@ def handler(event, context):
     ReturnValues = "NONE"
   )
 
-  logger.info(f"Reference submitted for {membershipNumber}")
+  logger.info(f"Reference submitted")
+  metrics.add_metric(name="ReferencesSubmittedCount", unit=MetricUnit.Count, value=1)
 
   return {
     "statusCode": 200,

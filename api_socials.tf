@@ -1,8 +1,8 @@
 # /socials
 
 module "socials" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = aws_api_gateway_rest_api.portal.root_resource_id
@@ -12,8 +12,8 @@ module "socials" {
 # /socials/{seriesId}
 
 module "socials_seriesId" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.socials.resource_id
@@ -23,8 +23,8 @@ module "socials_seriesId" {
 # /socials/{seriesId}/{eventId}
 
 module "socials_seriesId_eventId" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.socials_seriesId.resource_id
@@ -32,16 +32,16 @@ module "socials_seriesId_eventId" {
 }
 
 module "socials_seriesId_eventId_ANY" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.socials_seriesId_eventId.resource_path
+  path          = module.socials_seriesId_eventId.resource_path
 
   http_method = "ANY"
 
-  prefix = var.prefix
-  name = "socials_seriesId_eventId"
+  prefix      = var.prefix
+  name        = "socials_seriesId_eventId"
   description = "Socials proxy"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
@@ -50,7 +50,7 @@ module "socials_seriesId_eventId_ANY" {
 
   lambda_policy = {
     dynamodb_get = {
-      actions = [ 
+      actions = [
         "dynamodb:GetItem"
       ]
       resources = [
@@ -69,21 +69,24 @@ module "socials_seriesId_eventId_ANY" {
       ]
     }
   }
-  
+
   lambda_env = {
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
 
     EVENT_DELETE_LAMBDA = module.events_seriesId_eventId_DELETE.lambda_arn
-    EVENT_POST_LAMBDA = module.events_seriesId_eventId_POST.lambda_arn
-    EVENT_PUT_LAMBDA = module.events_seriesId_eventId_PUT.lambda_arn
+    EVENT_POST_LAMBDA   = module.events_seriesId_eventId_POST.lambda_arn
+    EVENT_PUT_LAMBDA    = module.events_seriesId_eventId_PUT.lambda_arn
   }
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 # /socials/{seriesId}/{eventId}/allocate
 
 module "socials_seriesId_eventId_allocate" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.socials_seriesId_eventId.resource_id
@@ -91,16 +94,16 @@ module "socials_seriesId_eventId_allocate" {
 }
 
 module "socials_seriesId_eventId_allocate_PUT" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.socials_seriesId_eventId_allocate.resource_path
+  path          = module.socials_seriesId_eventId_allocate.resource_path
 
   http_method = "PUT"
 
-  prefix = var.prefix
-  name = "socials_seriesId_eventId_allocate"
+  prefix      = var.prefix
+  name        = "socials_seriesId_eventId_allocate"
   description = "Socials proxy"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
@@ -109,7 +112,7 @@ module "socials_seriesId_eventId_allocate_PUT" {
 
   lambda_policy = {
     dynamodb_get = {
-      actions = [ 
+      actions = [
         "dynamodb:GetItem"
       ]
       resources = [
@@ -126,20 +129,23 @@ module "socials_seriesId_eventId_allocate_PUT" {
       ]
     }
   }
-  
+
   lambda_env = {
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
 
     EVENT_ALLOCATE_LAMBDA = module.events_seriesId_eventId_allocate_PUT.lambda_arn
   }
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 
 # /socials/{seriesId}/{eventId}/allocate/{id}
 
 module "socials_seriesId_eventId_allocate_id" {
-  source = "./api_resource"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_id = aws_api_gateway_rest_api.portal.id
   parent_id   = module.socials_seriesId_eventId_allocate.resource_id
@@ -147,16 +153,16 @@ module "socials_seriesId_eventId_allocate_id" {
 }
 
 module "socials_seriesId_eventId_allocate_id_DELETE" {
-  source = "./api_method_lambda"
-  depends_on = [ aws_api_gateway_rest_api.portal ]
-  
+  source     = "./api_method_lambda"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path = module.socials_seriesId_eventId_allocate_id.resource_path
+  path          = module.socials_seriesId_eventId_allocate_id.resource_path
 
   http_method = "DELETE"
 
-  prefix = var.prefix
-  name = "socials_seriesId_eventId_allocate_id"
+  prefix      = var.prefix
+  name        = "socials_seriesId_eventId_allocate_id"
   description = "Socials proxy"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
@@ -165,7 +171,7 @@ module "socials_seriesId_eventId_allocate_id_DELETE" {
 
   lambda_policy = {
     dynamodb_get = {
-      actions = [ 
+      actions = [
         "dynamodb:GetItem"
       ]
       resources = [
@@ -182,10 +188,13 @@ module "socials_seriesId_eventId_allocate_id_DELETE" {
       ]
     }
   }
-  
+
   lambda_env = {
     EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
 
     EVENT_ALLOCATE_LAMBDA = module.events_seriesId_eventId_allocate_id_DELETE.lambda_arn
   }
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }

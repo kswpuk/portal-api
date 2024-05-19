@@ -1,17 +1,24 @@
+from aws_lambda_powertools import Logger, Metrics
+from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools.utilities.data_classes import event_source, APIGatewayProxyEvent
+from aws_lambda_powertools.utilities.typing import LambdaContext
+
 import boto3
 from   datetime import date
 import json
-import logging
 import os
+import time
 
-logger = logging.getLogger()
-logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+logger = Logger()
+metrics = Metrics()
 
 APPLICATIONS_TABLE_NAME = os.getenv('APPLICATIONS_TABLE_NAME')
-logger.info(f"APPLICATIONS_TABLE_NAME = {APPLICATIONS_TABLE_NAME}")
-
 MEMBERS_TABLE_NAME = os.getenv('MEMBERS_TABLE_NAME')
-logger.info(f"MEMBERS_TABLE_NAME = {MEMBERS_TABLE_NAME}")
+
+logger.info("Initialising Lambda", extra={"environment_variables": {
+  "APPLICATIONS_TABLE_NAME": APPLICATIONS_TABLE_NAME,
+  "MEMBERS_TABLE_NAME": MEMBERS_TABLE_NAME
+}})
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -23,14 +30,14 @@ dynamodb = boto3.resource('dynamodb')
 applications_table = dynamodb.Table(APPLICATIONS_TABLE_NAME)
 members_table = dynamodb.Table(MEMBERS_TABLE_NAME)
 
-def handler(event, context):
-  logger.debug(event)
-
-  membershipNumber = event['pathParameters']['id']
+@event_source(data_class=APIGatewayProxyEvent)
+@metrics.log_metrics
+def handler(event: APIGatewayProxyEvent, context: LambdaContext):
+  membershipNumber = event.path_parameters['id']
+  logger.append_keys(membership_number=membershipNumber)
 
   # Check there is an application
-
-  logger.debug(f"Confirming {membershipNumber} has submitted an application")
+  logger.debug("Confirming application exists")
 
   try:
     application_response = applications_table.get_item(
@@ -39,7 +46,7 @@ def handler(event, context):
       }
     )
   except Exception as e:
-    logger.error(f"Unable to get application for {membershipNumber}: {str(e)}")
+    logger.exception("Unable to get application")
     raise e
 
   if 'Item' not in application_response or 'membershipNumber' not in application_response['Item']:
@@ -72,7 +79,7 @@ def handler(event, context):
       }
     )
   except Exception as e:
-    logger.error(f"Unable to approve application for {membershipNumber}: {str(e)}")
+    logger.exception("Unable to approve application")
     raise e
 
   # Remove application from applications table
@@ -83,10 +90,18 @@ def handler(event, context):
       }
     )
   except Exception as e:
-    logger.error(f"Unable to delete application for {membershipNumber}: {str(e)}")
+    logger.exception("Unable to delete application")
     raise e
+
+  # Calculate how long it took to approve the application
+  submitted_at = int(application["submittedAt"])
+  now = int(time.time())
+  delay_s = now - submitted_at
   
-  logger.info(f"Application approved for {membershipNumber}")
+  metrics.add_metric(name="ApplicationsApprovedCount", unit=MetricUnit.Count, value=1)
+  metrics.add_metric(name="ApplicationsApprovalTime", unit=MetricUnit.Seconds, value=delay_s)
+
+  logger.info("Application approved")
 
   return {
     "statusCode": 200,

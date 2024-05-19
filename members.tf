@@ -1,8 +1,8 @@
 # DynamoDB
 resource "aws_dynamodb_table" "members_table" {
-  name = "${var.prefix}-members"
+  name         = "${var.prefix}-members"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "membershipNumber"
+  hash_key     = "membershipNumber"
 
   attribute {
     name = "membershipNumber"
@@ -20,13 +20,13 @@ resource "aws_dynamodb_table" "members_table" {
   }
 
   global_secondary_index {
-    name               = "${var.prefix}-membership_status"
-    hash_key           = "status"
-    range_key          = "membershipExpires"
-    projection_type    = "ALL"
+    name            = "${var.prefix}-membership_status"
+    hash_key        = "status"
+    range_key       = "membershipExpires"
+    projection_type = "ALL"
   }
 
-  stream_enabled = true
+  stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 }
 
@@ -43,9 +43,9 @@ resource "aws_s3_bucket_acl" "member_photos_bucket" {
 resource "aws_s3_bucket_public_access_block" "member_photos_bucket" {
   bucket = aws_s3_bucket.member_photos_bucket.id
 
-  block_public_acls = true
-  block_public_policy = true
-  ignore_public_acls = true
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
   restrict_public_buckets = true
 }
 
@@ -56,15 +56,17 @@ module "expire_membership" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/cron/expire_membership"
+      path             = "${path.module}/lambda/cron/expire_membership"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-expire_membership-lambda"
-  description = "Expire membership"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Expire membership"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -75,7 +77,7 @@ module "expire_membership" {
         "dynamodb:Query",
         "dynamodb:UpdateItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.members_table.arn,
         "${aws_dynamodb_table.members_table.arn}/index/*"
       ]
@@ -103,22 +105,22 @@ module "expire_membership" {
     }
   }
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
-    EXPIRES_SOON_TEMPLATE = aws_ses_template.membership_expires_soon.name
-    MEMBERS_EMAIL = var.members_email
+    EXPIRES_SOON_TEMPLATE       = aws_ses_template.membership_expires_soon.name
+    MEMBERS_EMAIL               = var.members_email
     MEMBERSHIP_EXPIRED_TEMPLATE = aws_ses_template.membership_expired.name
-    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
-    STATUS_INDEX_NAME = "${var.prefix}-membership_status"
-    TABLE_NAME = aws_dynamodb_table.members_table.name
+    PORTAL_DOMAIN               = aws_route53_record.portal.fqdn
+    STATUS_INDEX_NAME           = "${var.prefix}-membership_status"
+    TABLE_NAME                  = aws_dynamodb_table.members_table.name
   }
 }
 
 resource "aws_cloudwatch_event_target" "expire_membership" {
-    rule = aws_cloudwatch_event_rule.daily_0700.name
-    arn = module.expire_membership.lambda_function_arn
+  rule = aws_cloudwatch_event_rule.daily_0700.name
+  arn  = module.expire_membership.lambda_function_arn
 }
 
 # Lambda - Delete Inactive Members
@@ -128,15 +130,17 @@ module "delete_accounts" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/cron/delete_accounts"
+      path             = "${path.module}/lambda/cron/delete_accounts"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-delete_accounts-lambda"
-  description = "Delete inactive accounts"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Delete inactive accounts"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -147,7 +151,7 @@ module "delete_accounts" {
         "dynamodb:Query",
         "dynamodb:DeleteItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.members_table.arn,
         "${aws_dynamodb_table.members_table.arn}/index/*"
       ]
@@ -175,22 +179,22 @@ module "delete_accounts" {
     }
   }
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
-    TABLE_NAME = aws_dynamodb_table.members_table.name
-    STATUS_INDEX_NAME = "${var.prefix}-membership_status"
-    DELETED_SOON_TEMPLATE = aws_ses_template.account_deleted_soon.name
+    TABLE_NAME               = aws_dynamodb_table.members_table.name
+    STATUS_INDEX_NAME        = "${var.prefix}-membership_status"
+    DELETED_SOON_TEMPLATE    = aws_ses_template.account_deleted_soon.name
     ACCOUNT_DELETED_TEMPLATE = aws_ses_template.account_deleted.name
-    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
-    MEMBERS_EMAIL = var.members_email
+    PORTAL_DOMAIN            = aws_route53_record.portal.fqdn
+    MEMBERS_EMAIL            = var.members_email
   }
 }
 
 resource "aws_cloudwatch_event_target" "delete_accounts" {
-    rule = aws_cloudwatch_event_rule.daily_0700.name
-    arn = module.delete_accounts.lambda_function_arn
+  rule = aws_cloudwatch_event_rule.daily_0700.name
+  arn  = module.delete_accounts.lambda_function_arn
 }
 
 # SES Templates
@@ -238,15 +242,17 @@ module "sync_members" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/sync/members"
+      path             = "${path.module}/lambda/sync/members"
       pip_requirements = true
     }
   ]
 
   function_name = "${var.prefix}-sync_members-lambda"
-  description = "Sync members DynamoDB table to Cognito and MailChimp"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Sync members DynamoDB table to Cognito and MailChimp"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -259,7 +265,7 @@ module "sync_members" {
         "dynamodb:GetShardIterator",
         "dynamodb:ListStreams"
       ]
-      resources = [ 
+      resources = [
         "${aws_dynamodb_table.members_table.arn}/stream/*"
       ]
     }
@@ -278,8 +284,8 @@ module "sync_members" {
     }
 
     secrets = {
-      actions = [ "secretsmanager:GetSecretValue" ]
-      resources = [ aws_secretsmanager_secret.api_keys.arn ]
+      actions   = ["secretsmanager:GetSecretValue"]
+      resources = [aws_secretsmanager_secret.api_keys.arn]
     }
 
     ses = {
@@ -306,27 +312,27 @@ module "sync_members" {
 
   publish = true
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
-    API_KEY_SECRET_NAME = aws_secretsmanager_secret.api_keys.arn
+    API_KEY_SECRET_NAME           = aws_secretsmanager_secret.api_keys.arn
     APPLICATION_ACCEPTED_TEMPLATE = aws_ses_template.application_accepted.name
-    MAILCHIMP_LIST_ID = var.mailchimp_list_id
-    MAILCHIMP_SERVER_PREFIX = var.mailchimp_server_prefix
-    PHOTO_BUCKET_NAME = aws_s3_bucket.member_photos_bucket.id
-    MEMBERS_EMAIL = var.members_email
-    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
-    USER_POOL = aws_cognito_user_pool.portal.id
+    MAILCHIMP_LIST_ID             = var.mailchimp_list_id
+    MAILCHIMP_SERVER_PREFIX       = var.mailchimp_server_prefix
+    PHOTO_BUCKET_NAME             = aws_s3_bucket.member_photos_bucket.id
+    MEMBERS_EMAIL                 = var.members_email
+    PORTAL_DOMAIN                 = aws_route53_record.portal.fqdn
+    USER_POOL                     = aws_cognito_user_pool.portal.id
 
-    MANAGER_GROUP = aws_cognito_user_group.manager.name
-    EVENTS_GROUP = aws_cognito_user_group.events.name
-    MEMBERS_GROUP = aws_cognito_user_group.members.name
-    MONEY_GROUP = aws_cognito_user_group.money.name
-    MEDIA_GROUP = aws_cognito_user_group.media.name
-    SOCIALS_GROUP = aws_cognito_user_group.socials.name
+    MANAGER_GROUP   = aws_cognito_user_group.manager.name
+    EVENTS_GROUP    = aws_cognito_user_group.events.name
+    MEMBERS_GROUP   = aws_cognito_user_group.members.name
+    MONEY_GROUP     = aws_cognito_user_group.money.name
+    MEDIA_GROUP     = aws_cognito_user_group.media.name
+    SOCIALS_GROUP   = aws_cognito_user_group.socials.name
     COMMITTEE_GROUP = aws_cognito_user_group.committee.name
-    STANDARD_GROUP = aws_cognito_user_group.standard.name
+    STANDARD_GROUP  = aws_cognito_user_group.standard.name
   }
 }
 
@@ -343,15 +349,17 @@ module "membership_summary" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/cron/membership_summary"
+      path             = "${path.module}/lambda/cron/membership_summary"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-membership_summary-lambda"
-  description = "Membership Summary"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Membership Summary"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -361,7 +369,7 @@ module "membership_summary" {
       actions = [
         "dynamodb:Query",
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.members_table.arn,
         "${aws_dynamodb_table.members_table.arn}/index/*"
       ]
@@ -371,7 +379,7 @@ module "membership_summary" {
       actions = [
         "dynamodb:Scan",
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.applications_table.arn,
         aws_dynamodb_table.references_table.arn
       ]
@@ -398,21 +406,21 @@ module "membership_summary" {
     }
   }
 
-  timeout = 300
+  timeout     = 300
   memory_size = 512
 
   environment_variables = {
-    APPLICATIONS_TABLE = aws_dynamodb_table.applications_table.name
-    MEMBERS_EMAIL = var.members_email
+    APPLICATIONS_TABLE          = aws_dynamodb_table.applications_table.name
+    MEMBERS_EMAIL               = var.members_email
     MEMBERSHIP_SUMMARY_TEMPLATE = aws_ses_template.membership_summary.name
-    MEMBERSHIP_TABLE = aws_dynamodb_table.members_table.name
-    PORTAL_DOMAIN = aws_route53_record.portal.fqdn
-    REFERENCES_TABLE = aws_dynamodb_table.references_table.name
-    STATUS_INDEX_NAME = "${var.prefix}-membership_status"
+    MEMBERSHIP_TABLE            = aws_dynamodb_table.members_table.name
+    PORTAL_DOMAIN               = aws_route53_record.portal.fqdn
+    REFERENCES_TABLE            = aws_dynamodb_table.references_table.name
+    STATUS_INDEX_NAME           = "${var.prefix}-membership_status"
   }
 }
 
 resource "aws_cloudwatch_event_target" "membership_summary" {
   rule = aws_cloudwatch_event_rule.weekly.name
-  arn = module.membership_summary.lambda_function_arn
+  arn  = module.membership_summary.lambda_function_arn
 }

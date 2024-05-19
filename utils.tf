@@ -3,15 +3,17 @@ module "utils_events_eligible" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/utils/events/eligible"
+      path             = "${path.module}/lambda/utils/events/eligible"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-utils_events_eligible-lambda"
-  description = "Check eligibility to attend an event"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Check eligibility to attend an event"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -21,7 +23,7 @@ module "utils_events_eligible" {
       actions = [
         "dynamodb:GetItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_instance_table.arn,
         aws_dynamodb_table.members_table.arn
       ]
@@ -32,12 +34,12 @@ module "utils_events_eligible" {
 
   publish = true
 
-  timeout = 30
+  timeout     = 30
   memory_size = 512
 
   environment_variables = {
     EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.name
-    MEMBERS_TABLE = aws_dynamodb_table.members_table.name
+    MEMBERS_TABLE        = aws_dynamodb_table.members_table.name
   }
 }
 
@@ -46,15 +48,17 @@ module "utils_events_validate" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/utils/events/validate"
+      path             = "${path.module}/lambda/utils/events/validate"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-utils_events_validate-lambda"
-  description = "Validate event information"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Validate event information"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -64,7 +68,7 @@ module "utils_events_validate" {
       actions = [
         "dynamodb:GetItem"
       ]
-      resources = [ 
+      resources = [
         aws_dynamodb_table.event_series_table.arn
       ]
     }
@@ -74,7 +78,7 @@ module "utils_events_validate" {
 
   publish = true
 
-  timeout = 30
+  timeout     = 30
   memory_size = 512
 
   environment_variables = {
@@ -87,15 +91,17 @@ module "utils_events_weighting" {
 
   source_path = [
     {
-      path = "${path.module}/lambda/utils/events/weighting"
+      path             = "${path.module}/lambda/utils/events/weighting"
       pip_requirements = false
     }
   ]
 
   function_name = "${var.prefix}-utils_events_weighting-lambda"
-  description = "Determine which weighting criteria a member meets"
-  handler = "index.handler"
-  runtime = "python3.9"
+  description   = "Determine which weighting criteria a member meets"
+  handler       = "index.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
 
@@ -116,7 +122,7 @@ module "utils_events_weighting" {
       actions = [
         "dynamodb:Query",
       ]
-      resources = [ 
+      resources = [
         "${aws_dynamodb_table.event_allocation_table.arn}/index/*"
       ]
     }
@@ -126,14 +132,14 @@ module "utils_events_weighting" {
 
   publish = true
 
-  timeout = 30
+  timeout     = 30
   memory_size = 512
 
   environment_variables = {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_ALLOCATIONS_INDEX = "${var.prefix}-member_event_allocations"
-    EVENT_INSTANCE_TABLE = aws_dynamodb_table.event_instance_table.id
-    EVENT_SERIES_TABLE = aws_dynamodb_table.event_series_table.id
-    MEMBERS_TABLE = aws_dynamodb_table.members_table.id
+    EVENT_INSTANCE_TABLE    = aws_dynamodb_table.event_instance_table.id
+    EVENT_SERIES_TABLE      = aws_dynamodb_table.event_series_table.id
+    MEMBERS_TABLE           = aws_dynamodb_table.members_table.id
   }
 }
