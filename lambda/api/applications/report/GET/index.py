@@ -49,10 +49,10 @@ def handler(event, context):
 
   for app in applications:    
     if app['submittedAt'] > newestTimestamp:
-      newestTimestamp = app['submittedAt']
+      newestTimestamp = int(app['submittedAt'])
 
     if app['submittedAt'] < oldestTimestamp:
-      oldestTimestamp = app['submittedAt']
+      oldestTimestamp = int(app['submittedAt'])
 
   newestDate = datetime.datetime.fromtimestamp(newestTimestamp).date()
   oldestDate = datetime.datetime.fromtimestamp(oldestTimestamp).date()
