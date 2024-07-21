@@ -1,20 +1,20 @@
-
+from aws_lambda_powertools import Logger
 import boto3
 from   boto3.dynamodb.conditions import Key
 import datetime
 import json
-import logging
 import os
 
 # Configure logging
-logger = logging.getLogger()
-logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+logger = Logger()
 
 APPLICATIONS_TABLE = os.getenv('APPLICATIONS_TABLE')
 REFERENCES_TABLE = os.getenv('REFERENCES_TABLE')
-
-logger.info(f"APPLICATIONS_TABLE = {APPLICATIONS_TABLE}")
-logger.info(f"REFERENCES_TABLE = {REFERENCES_TABLE}")
+ 
+logger.info("Initialising Lambda", extra={"environment_variables": {
+  "APPLICATIONS_TABLE": APPLICATIONS_TABLE,
+  "REFERENCES_TABLE": REFERENCES_TABLE
+}})
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",

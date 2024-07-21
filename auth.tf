@@ -4,29 +4,31 @@ module "auth_lambda" {
 
   source_path = [
     {
-      path = "lambda/auth"
+      path             = "lambda/auth"
       pip_requirements = true
     }
   ]
 
   function_name = "${var.prefix}-auth"
-  description = "Lambda Authorizer for API Gateway"
-  handler = "auth.handler"
-  runtime = "python3.9"
+  description   = "Lambda Authorizer for API Gateway"
+  handler       = "auth.handler"
+
+  runtime       = local.lambda_runtime
+  architectures = local.lambda_architecture
 
   attach_cloudwatch_logs_policy = true
-  attach_policy_statements = true
+  attach_policy_statements      = true
   policy_statements = {
     dynamodb = {
-      actions = [ "dynamodb:BatchGetItem" ]
-      resources = [ aws_dynamodb_table.auth_table.arn ]
+      actions   = ["dynamodb:BatchGetItem"]
+      resources = [aws_dynamodb_table.auth_table.arn]
     }
   }
   assume_role_policy_statements = local.lambda_assume_role_policy
 
   environment_variables = {
-    TABLE_NAME = aws_dynamodb_table.auth_table.id
-    COGNITO_USER_POOL_ID = aws_cognito_user_pool.portal.id
+    TABLE_NAME            = aws_dynamodb_table.auth_table.id
+    COGNITO_USER_POOL_ID  = aws_cognito_user_pool.portal.id
     COGNITO_APP_CLIENT_ID = aws_cognito_user_pool_client.portal.id
   }
 }
@@ -38,7 +40,7 @@ resource "aws_cognito_user_pool" "portal" {
 
   account_recovery_setting {
     recovery_mechanism {
-      name = "verified_email"
+      name     = "verified_email"
       priority = 1
     }
   }
@@ -48,7 +50,7 @@ resource "aws_cognito_user_pool" "portal" {
     invite_message_template {
       email_subject = "Welcome to the KSWP Portal"
       email_message = "An account has been created for you on the KSWP Portal, which can be accessed at https://${aws_route53_record.portal.fqdn}. Your username is {username}, and your temporary password is {####}"
-      sms_message = "Your KSWP Portal username is {username}, and your temporary password is {####}"
+      sms_message   = "Your KSWP Portal username is {username}, and your temporary password is {####}"
     }
   }
 
@@ -59,26 +61,26 @@ resource "aws_cognito_user_pool" "portal" {
   }
 
   password_policy {
-    minimum_length = 8
+    minimum_length    = 8
     require_lowercase = true
     require_uppercase = true
-    require_numbers = false
-    require_symbols = false
+    require_numbers   = false
+    require_symbols   = false
 
     temporary_password_validity_days = 365
   }
 
   email_configuration {
     email_sending_account = "DEVELOPER"
-    from_email_address = "KSWP Portal <${var.prefix}@${var.domain}>"
-    source_arn = data.aws_ses_domain_identity.qswp.arn
+    from_email_address    = "KSWP Portal <${var.prefix}@${var.domain}>"
+    source_arn            = data.aws_ses_domain_identity.qswp.arn
   }
 }
 
 resource "aws_cognito_user_pool_client" "portal" {
   name = "${var.prefix}-client"
 
-  user_pool_id = aws_cognito_user_pool.portal.id
+  user_pool_id        = aws_cognito_user_pool.portal.id
   explicit_auth_flows = ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"]
 }
 
@@ -142,9 +144,9 @@ resource "aws_cognito_user_group" "standard" {
 
 # DynamoDB
 resource "aws_dynamodb_table" "auth_table" {
-  name = "${var.prefix}-auth-policies"
+  name         = "${var.prefix}-auth-policies"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "group"
+  hash_key     = "group"
 
   attribute {
     name = "group"
@@ -156,7 +158,7 @@ resource "aws_dynamodb_table_item" "auth_policy" {
   for_each = fileset("policies", "*.json")
 
   table_name = aws_dynamodb_table.auth_table.id
-  hash_key = aws_dynamodb_table.auth_table.hash_key
+  hash_key   = aws_dynamodb_table.auth_table.hash_key
 
   item = <<ITEM
 {

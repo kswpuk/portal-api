@@ -1,10 +1,16 @@
 locals {
+  powertools_layer_arn = "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:71"
+  pandas_layer_arn = "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python312-Arm64:8"
+
+  lambda_architecture  = ["arm64"]
+  lambda_runtime       = "python3.12"
+
   lambda_assume_role_policy = {
     lambda = {
       actions = ["sts:AssumeRole"]
       principals = {
         lambda_principal = {
-          type = "Service"
+          type        = "Service"
           identifiers = ["lambda.amazonaws.com"]
         }
       }
@@ -45,20 +51,20 @@ END
 # Cron Timings
 
 resource "aws_cloudwatch_event_rule" "daily_0700" {
-  name = "${var.prefix}-daily_0700"
-  description = "Fires daily at 0700"
+  name                = "${var.prefix}-daily_0700"
+  description         = "Fires daily at 0700"
   schedule_expression = "cron(0 7 * * ? *)"
 }
 
 resource "aws_cloudwatch_event_rule" "weekly" {
-  name = "${var.prefix}-weekly"
-  description = "Fires on Fridays at 0700"
+  name                = "${var.prefix}-weekly"
+  description         = "Fires on Fridays at 0700"
   schedule_expression = "cron(0 7 ? * FRI *)"
 }
 
 resource "aws_cloudwatch_event_rule" "monthly" {
-  name = "${var.prefix}-monthly"
-  description = "Fires on first of month at 0900"
+  name                = "${var.prefix}-monthly"
+  description         = "Fires on first of month at 0900"
   schedule_expression = "cron(0 9 1 * ? *)"
 }
 
@@ -74,15 +80,15 @@ data "aws_region" "current" {}
 # Secrets
 
 resource "aws_secretsmanager_secret" "api_keys" {
-  name = "${var.prefix}-api_keys"
-  description = "API keys for external services used by the Portal"
+  name                    = "${var.prefix}-api_keys"
+  description             = "API keys for external services used by the Portal"
   recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "api_keys" {
-  secret_id     = aws_secretsmanager_secret.api_keys.id
+  secret_id = aws_secretsmanager_secret.api_keys.id
   secret_string = jsonencode({
     mailchimp = var.mailchimp_api_key
-    stripe = var.stripe_api_key
+    stripe    = var.stripe_api_key
   })
 }

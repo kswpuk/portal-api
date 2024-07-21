@@ -43,6 +43,8 @@ module "lambda" {
   handler = var.lambda_handler
   runtime = var.lambda_runtime
 
+  architectures = var.lambda_architecture
+
   attach_cloudwatch_logs_policy = true
 
   attach_policy_statements = length(var.lambda_policy) > 0
@@ -62,4 +64,6 @@ module "lambda" {
   memory_size = var.lambda_memory
 
   environment_variables = var.lambda_env
+
+  layers = var.lambda_layers
 }

@@ -1,9 +1,13 @@
+from aws_lambda_powertools import Logger, Metrics
+from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools.utilities.data_classes import event_source, APIGatewayProxyEvent
+from aws_lambda_powertools.utilities.typing import LambdaContext
+
 import base64
 import boto3
 import datetime
 import io
 import json
-import logging
 import os
 import phonenumbers
 from PIL import Image
@@ -12,20 +16,20 @@ import time
 from ukpostcodeutils import validation
 from validate_email import validate_email
 
-logger = logging.getLogger()
-logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+logger = Logger()
+metrics = Metrics()
 
 APPLICATIONS_TABLE_NAME = os.getenv('APPLICATIONS_TABLE_NAME')
-logger.info(f"DynamoDB Application Table Name: {APPLICATIONS_TABLE_NAME}")
-
 MEMBERS_TABLE_NAME = os.getenv('MEMBERS_TABLE_NAME')
-logger.info(f"DynamoDB Member Table Name: {MEMBERS_TABLE_NAME}")
-
 REFERENCES_TABLE_NAME = os.getenv('REFERENCES_TABLE_NAME')
-logger.info(f"DynamoDB References Table Name: {REFERENCES_TABLE_NAME}")
-
 EVIDENCE_BUCKET_NAME = os.getenv('EVIDENCE_BUCKET_NAME')
-logger.info(f"S3 Evidence Bucket Name: {EVIDENCE_BUCKET_NAME}")
+
+logger.info("Initialising Lambda", extra={"environment_variables": {
+  "APPLICATIONS_TABLE_NAME": APPLICATIONS_TABLE_NAME,
+  "MEMBERS_TABLE_NAME": MEMBERS_TABLE_NAME,
+  "REFERENCES_TABLE_NAME": REFERENCES_TABLE_NAME,
+  "EVIDENCE_BUCKET_NAME": EVIDENCE_BUCKET_NAME
+}})
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -41,14 +45,16 @@ references_table = dynamodb.Table(REFERENCES_TABLE_NAME)
 s3 = boto3.resource('s3')
 evidence_bucket = s3.Bucket(EVIDENCE_BUCKET_NAME)
 
-def handler(event, context):
-  logger.debug(event)
+@event_source(data_class=APIGatewayProxyEvent)
+@metrics.log_metrics
+def handler(event: APIGatewayProxyEvent, context: LambdaContext):
+  membershipNumber = str(event.path_parameters['id']).strip().lstrip('0')
+  logger.append_keys(membership_number=membershipNumber)
 
-  membershipNumber = str(event['pathParameters']['id']).strip().lstrip('0')
+  logger.info("New application request received")
 
   # Check this number isn't already in use!
-
-  logger.debug(f"Confirming {membershipNumber} has not previously submitted an application, and isn't already a member...")
+  logger.debug("Confirming application isn't for an existing member")
 
   applications_response = applications_table.get_item(
     Key={
@@ -84,12 +90,8 @@ def handler(event, context):
       })
     }
 
-
-  logger.info(f"Submitting application for {membershipNumber}")
-
   # Do validation
-
-  logger.debug(f"Validating input for {membershipNumber}...")
+  logger.debug("Validating input")
 
   validationErrors = []
   application = json.loads(event['body'])
@@ -137,7 +139,7 @@ def handler(event, context):
   if not address:
     validationErrors.append("Address cannot be empty")
   
-  postcode = re.sub("\s+", "", str(application.get("postcode")).upper())
+  postcode = re.sub(r"\s+", "", str(application.get("postcode")).upper())
   if not postcode:
     validationErrors.append("Postcode cannot be empty")
   elif not validation.is_valid_postcode(postcode):
@@ -152,7 +154,7 @@ def handler(event, context):
   try:
     evidence = Image.open(io.BytesIO(base64.decodebytes(bytes(application.get("evidence").split(",", 1)[1], "utf-8")))).convert("RGB")
   except Exception as e:
-    logger.warning(f"Unable to open evidence as image: {str(e)}")
+    logger.warning("Unable to open evidence as image", extra={"error": str(e)})
     validationErrors.append("Unable to read evidence as image")
 
   srName = str(application.get("srName")).strip()
@@ -185,7 +187,8 @@ def handler(event, context):
     validationErrors.append("Scout reference and non-Scout reference cannot use the same e-mail address")
 
   if len(validationErrors) > 0:
-    logger.warning(f"{len(validationErrors)} errors found during validation of application for {membershipNumber}: {validationErrors}")
+    logger.warning("Validation of application failed", extra={"validation_error_count": len(validationErrors), "validation_errors": validationErrors})
+  
     return {
       "statusCode": 422,
       "headers": headers,
@@ -195,10 +198,9 @@ def handler(event, context):
       })
     }
   else:
-    logger.info(f"No errors found during validation of application for {membershipNumber}")
+    logger.info(f"Validation of application succeeded")
 
   # Put records in DynamoDB
-  logger.debug(f"Submitting application for {membershipNumber}...")
 
   response = applications_table.put_item(
     Item={
@@ -216,8 +218,7 @@ def handler(event, context):
     ConditionExpression = "attribute_not_exists(membershipNumber)",
     ReturnValues = "NONE"
   )
-
-  logger.debug(f"Server response (application): {response}")
+  logger.debug("Received server response (application)", extra={"response": response})
 
   response = references_table.put_item(
     Item={
@@ -227,7 +228,7 @@ def handler(event, context):
     },
     ReturnValues = "NONE"
   )
-  logger.debug(f"Server response (Scout reference): {response}")
+  logger.debug("Received server response (Scout reference)", extra={"response": response})
 
   response = references_table.put_item(
     Item={
@@ -237,10 +238,10 @@ def handler(event, context):
     },
     ReturnValues = "NONE"
   )
-  logger.debug(f"Server response (non-Scout reference): {response}")
+  logger.debug("Received server response (non-Scout reference)", extra={"response": response})
 
   # Upload evidence to S3 as JPEG
-  logger.debug(f"Uploading evidence as JPEG to S3 bucket for {membershipNumber}")
+  logger.debug("Uploading evidence as JPEG to S3 bucket")
 
   try:
     evidence_b = io.BytesIO()
@@ -249,9 +250,11 @@ def handler(event, context):
 
     evidence_bucket.upload_fileobj(evidence_b, membershipNumber + ".jpg", ExtraArgs={'ContentType': 'image/jpeg'})
   except Exception as e:
-    logger.error(f"Failed to upload evidence to S3: {str(e)}")
+    logger.error("Failed to upload evidence to S3", extra={"error": str(e)})
+    # Don't raise a reception - the membership coordinator can follow up manually
 
-  logger.info(f"Application submitted for {membershipNumber}")
+  logger.info("Application submitted")
+  metrics.add_metric(name="ApplicationsSubmittedCount", unit=MetricUnit.Count, value=1)
 
   return {
     "statusCode": 200,

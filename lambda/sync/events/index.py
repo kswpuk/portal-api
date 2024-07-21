@@ -1,5 +1,6 @@
 import boto3
-from   boto3.dynamodb.conditions import Key
+from   boto3.dynamodb.conditions import Attr,Key
+import datetime
 import json
 import logging
 import os
@@ -68,7 +69,7 @@ def new_event(eventSeriesId, eventInstance):
   error_count = 0
   success_count = 0
 
-  for member in get_members():
+  for member in get_members(eventInstance['startDate']['S'][0:10], eventInstance['attendanceCriteria']['L']):
     logger.debug(f"Sending event notification to {member['email']}")
 
     if member.get('preferredName'):
@@ -128,10 +129,21 @@ def remove_event(eventSeriesId, eventId):
     except Exception as e:
       logger.warn(f"Unable to delete allocation of {allocation['membershipNumber']} for {combinedEventId}: {str(e)}")
 
+def get_cutoff(event_date):
+  event = datetime.date.fromisoformat(event_date)
+  return datetime.date(event.year - 25, event.month, event.day).isoformat()
 
-def get_members():
+def get_members(event_date, attendance_criteria):
   results = []
   last_evaluated_key = None
+
+  query_filter = {}
+  if "under25" in [x['S'] for x in attendance_criteria]:
+    query_filter["FilterExpression"] = Attr('dateOfBirth').gte(get_cutoff(event_date))
+  elif "over25" in [x['S'] for x in attendance_criteria]:
+    query_filter["FilterExpression"] = Attr('dateOfBirth').lte(get_cutoff(event_date))
+
+  # TODO: Filter by active?
 
   while True:
     if last_evaluated_key:
@@ -139,13 +151,15 @@ def get_members():
         IndexName=MEMBERS_STATUS_INDEX,
         KeyConditionExpression=Key("status").eq("ACTIVE"),
         ExclusiveStartKey=last_evaluated_key,
-        ProjectionExpression="firstName,preferredName,surname,email"
+        ProjectionExpression="firstName,preferredName,surname,email",
+        **query_filter
       )
     else: 
       response = members_table.query(
         IndexName=MEMBERS_STATUS_INDEX,
         KeyConditionExpression=Key("status").eq("ACTIVE"),
-        ProjectionExpression="firstName,preferredName,surname,email"
+        ProjectionExpression="firstName,preferredName,surname,email",
+        **query_filter
       )
 
     last_evaluated_key = response.get('LastEvaluatedKey')    

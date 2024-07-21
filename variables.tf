@@ -1,5 +1,5 @@
 variable "default_tags" {
-  type = map
+  type = map(any)
 }
 
 variable "prefix" {
@@ -23,21 +23,21 @@ variable "stripe_api_key" {
 }
 
 variable "domain" {
-  type = string
+  type    = string
   default = "kswp.org.uk"
 }
 
 variable "events_email" {
-  type = string
+  type    = string
   default = "\"KSWP Events Coordinator\" <events@kswp.org.uk>"
 }
 
 variable "members_email" {
-  type = string
+  type    = string
   default = "\"KSWP Membership Coordinator\" <members@kswp.org.uk>"
 }
 
 variable "money_email" {
-  type = string
+  type    = string
   default = "\"KSWP Treasurer\" <money@kswp.org.uk>"
 }

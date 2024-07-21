@@ -72,7 +72,7 @@ def handler(event, context):
   if not address:
     validationErrors.append("Address cannot be empty")
   
-  postcode = re.sub("\s+", "", str(member.get("postcode")).upper())
+  postcode = re.sub(r"\s+", "", str(member.get("postcode")).upper())
   if not postcode:
     validationErrors.append("Postcode cannot be empty")
   elif not validation.is_valid_postcode(postcode):

@@ -1,20 +1,22 @@
+from aws_lambda_powertools import Logger
+from aws_lambda_powertools.utilities.typing import LambdaContext
 
 import boto3
 from   boto3.dynamodb.conditions import Attr
 import datetime
 import json
-import logging
 import os
 
 # Configure logging
-logger = logging.getLogger()
-logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+logger = Logger()
 
 APPLICATIONS_TABLE = os.getenv('APPLICATIONS_TABLE')
 REFERENCES_TABLE = os.getenv('REFERENCES_TABLE')
 
-logger.info(f"APPLICATIONS_TABLE = {APPLICATIONS_TABLE}")
-logger.info(f"REFERENCES_TABLE = {REFERENCES_TABLE}")
+logger.info("Initialising Lambda", extra={"environment_variables": {
+  "APPLICATIONS_TABLE": APPLICATIONS_TABLE,
+  "REFERENCES_TABLE": REFERENCES_TABLE
+}})
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -28,13 +30,13 @@ dynamodb = boto3.resource('dynamodb')
 applications_table = dynamodb.Table(APPLICATIONS_TABLE)
 references_table = dynamodb.Table(REFERENCES_TABLE)
 
-def handler(event, context):
+def handler(event, context: LambdaContext):
   # Get data
   logger.debug("Scanning for all applications")
   try:
     applications = scan_table(applications_table)
   except Exception as e:
-    logger.error(f"Unable to scan applications table: {str(e)}")
+    logger.error("Unable to scan applications table", extra={"error": str(e)})
     return {
       "statusCode": 500,
       "headers": headers,
@@ -45,7 +47,7 @@ def handler(event, context):
   try:
     references = scan_table(references_table, FilterExpression=Attr("submittedAt").gt(0))
   except Exception as e:
-    logger.error(f"Unable to scan references table: {str(e)}")
+    logger.error("Unable to scan references table", extra={"error": str(e)})
     return {
       "statusCode": 500,
       "headers": headers,

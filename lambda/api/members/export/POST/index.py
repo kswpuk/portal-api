@@ -80,7 +80,7 @@ def handler(event, context):
   # Format fields
   for member in member_information:
     if member.get("lastUpdated"):
-      member["lastUpdated"] = datetime.datetime.fromtimestamp(member["lastUpdated"]).isoformat()
+      member["lastUpdated"] = datetime.datetime.fromtimestamp(int(member["lastUpdated"])).isoformat()
     
     if member.get("telephone"):
       tel = phonenumbers.parse(member["telephone"], None)

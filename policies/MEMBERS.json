@@ -10,6 +10,7 @@
         "arn:aws:execute-api:*:*:*/*/POST/members/compare",
         "arn:aws:execute-api:*:*:*/*/GET/applications",
         "arn:aws:execute-api:*:*:*/*/GET/applications/*",
+        "arn:aws:execute-api:*:*:*/*/DELETE/applications/*",
         "arn:aws:execute-api:*:*:*/*/POST/applications/*/approve",
         "arn:aws:execute-api:*:*:*/*/GET/applications/*/evidence",
         "arn:aws:execute-api:*:*:*/*/GET/applications/*/references",
