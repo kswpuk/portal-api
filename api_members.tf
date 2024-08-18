@@ -594,6 +594,53 @@ module "members_id_role_PATCH" {
 END
 }
 
+# /members/{id}/suspended
+
+module "members_id_suspended" {
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.members_id.resource_id
+  path_part   = "suspended"
+}
+
+module "members_id_suspended_PATCH" {
+  source     = "./api_method_dynamodb"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path          = module.members_id_suspended.resource_path
+
+  http_method = "PATCH"
+
+  prefix = var.prefix
+  name   = "members_id_suspended"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action    = "UpdateItem"
+  dynamodb_table_arn = aws_dynamodb_table.members_table.arn
+
+
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.members_table.name}",
+  "Key": {
+    "membershipNumber": {
+      "S": "$util.escapeJavaScript($input.params("id"))"
+    }
+  },
+  "UpdateExpression": "SET suspended = :v",
+  "ExpressionAttributeValues": {
+    ":v": {
+      "BOOL": #if( $input.json('$.suspended') == false ) false #else true #end
+    }
+  }
+}
+END
+}
+
 # /members/report
 
 module "members_report" {

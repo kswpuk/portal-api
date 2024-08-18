@@ -205,6 +205,24 @@ resource "aws_ses_template" "application_accepted" {
   html    = file("${path.module}/emails/application_accepted.html")
 }
 
+resource "aws_ses_template" "account_suspended" {
+  name    = "${var.prefix}-account_suspended"
+  subject = "Your KSWP account has been suspended"
+  html    = file("${path.module}/emails/account_suspended.html")
+}
+
+resource "aws_ses_template" "account_suspended_events" {
+  name    = "${var.prefix}-account_suspended_events"
+  subject = "An account has been suspended"
+  html    = file("${path.module}/emails/account_suspended_events.html")
+}
+
+resource "aws_ses_template" "account_unsuspended" {
+  name    = "${var.prefix}-account_unsuspended"
+  subject = "Your KSWP account has been unsuspended"
+  html    = file("${path.module}/emails/account_unsuspended.html")
+}
+
 resource "aws_ses_template" "membership_expires_soon" {
   name    = "${var.prefix}-membership_expires_soon"
   subject = "Your KSWP membership will expire soon"
@@ -283,6 +301,15 @@ module "sync_members" {
       ]
     }
 
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_members_future_events.lambda_function_arn
+      ]
+    }
+
     secrets = {
       actions   = ["secretsmanager:GetSecretValue"]
       resources = [aws_secretsmanager_secret.api_keys.arn]
@@ -294,6 +321,9 @@ module "sync_members" {
       ]
       resources = [
         aws_ses_template.application_accepted.arn,
+        aws_ses_template.account_suspended.arn,
+        aws_ses_template.account_suspended_events.arn,
+        aws_ses_template.account_unsuspended.arn,
         data.aws_ses_domain_identity.qswp.arn
       ]
     }
@@ -318,11 +348,16 @@ module "sync_members" {
   environment_variables = {
     API_KEY_SECRET_NAME           = aws_secretsmanager_secret.api_keys.arn
     APPLICATION_ACCEPTED_TEMPLATE = aws_ses_template.application_accepted.name
+    EVENTS_EMAIL                  = var.events_email
+    FUTURE_EVENTS_LAMBDA          = module.utils_members_future_events.lambda_function_arn
     MAILCHIMP_LIST_ID             = var.mailchimp_list_id
     MAILCHIMP_SERVER_PREFIX       = var.mailchimp_server_prefix
     PHOTO_BUCKET_NAME             = aws_s3_bucket.member_photos_bucket.id
     MEMBERS_EMAIL                 = var.members_email
     PORTAL_DOMAIN                 = aws_route53_record.portal.fqdn
+    SUSPENDED_TEMPLATE            = aws_ses_template.account_suspended.name
+    SUSPENDED_EVENTS_TEMPLATE     = aws_ses_template.account_suspended_events.name
+    UNSUSPENDED_TEMPLATE          = aws_ses_template.account_unsuspended.name
     USER_POOL                     = aws_cognito_user_pool.portal.id
 
     MANAGER_GROUP   = aws_cognito_user_group.manager.name

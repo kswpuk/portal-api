@@ -42,7 +42,7 @@ def handler(event, context):
   try:
     
     if COMMITTEE_GROUP in groups:
-      projectionExpression += ",email,dateOfBirth"
+      projectionExpression += ",email,dateOfBirth,suspended"
 
     members = scan_table(members_table, ProjectionExpression=projectionExpression, ExpressionAttributeNames=expressionAttributeNames)
 

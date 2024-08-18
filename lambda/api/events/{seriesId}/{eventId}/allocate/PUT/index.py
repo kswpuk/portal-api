@@ -9,8 +9,10 @@ logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
+SUSPENDED_ARN = os.getenv('SUSPENDED_ARN')
 
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
+logger.info(f"SUSPENDED_ARN = {SUSPENDED_ARN}")
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -22,6 +24,8 @@ headers = {
 dynamodb = boto3.resource('dynamodb')
 
 event_allocations_table = dynamodb.Table(EVENT_ALLOCATIONS_TABLE)
+
+lambda_client = boto3.client('lambda')
 
 def handler(event, context):
   event_series_id = event['pathParameters']['seriesId']
@@ -37,7 +41,9 @@ def handler(event, context):
       logger.warn(f"No allocation provided in {a}")
       continue
 
-    membership_numbers = a.get("membershipNumbers", [])
+    membership_numbers = [m for m in a.get("membershipNumbers", []) if not is_suspended(m)]
+
+    logger.info(f"Updating event allocation for {len(membership_numbers)} non-suspended members")
 
     for m in membership_numbers:
       # Update allocation
@@ -63,3 +69,15 @@ def handler(event, context):
     "statusCode": 200,
     "headers": headers
   }
+
+def is_suspended(membership_number):
+  try:
+    suspended = json.loads(lambda_client.invoke(
+      FunctionName=SUSPENDED_ARN,
+      Payload=json.dumps({"membershipNumbers": [membership_number]})
+    )['Payload'].read())
+  except Exception as e:
+    logger.error(f"Unable to get suspension status of member: {str(e)}")
+    raise e
+  
+  return suspended.get(a["membershipNumber"], False)

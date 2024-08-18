@@ -12,10 +12,12 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
 EVENT_INSTANCE_TABLE = os.getenv('EVENT_INSTANCE_TABLE')
+SUSPENDED_ARN = os.getenv('SUSPENDED_ARN')
 WEIGHTING_ARN = os.getenv('WEIGHTING_ARN')
 
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_INSTANCE_TABLE = {EVENT_INSTANCE_TABLE}")
+logger.info(f"SUSPENDED_ARN = {SUSPENDED_ARN}")
 logger.info(f"WEIGHTING_ARN = {WEIGHTING_ARN}")
 
 headers = {
@@ -40,6 +42,21 @@ def handler(event, context):
   allocations = get_allocations(combined_event_id)
 
   registered_allocations = list(filter(lambda a: a["allocation"] == "REGISTERED", allocations))
+
+  # Check suspension status
+  try:
+    suspended = json.loads(lambda_client.invoke(
+      FunctionName=SUSPENDED_ARN,
+      Payload=json.dumps({
+        "membershipNumbers": list(map(lambda a: a["membershipNumber"], registered_allocations))
+      })
+    )['Payload'].read())
+  except Exception as e:
+    logger.error(f"Unable to get suspension status of members: {str(e)}")
+    raise e
+  
+  # Filter registered_allocations to non-suspended members
+  registered_allocations = list(filter(lambda a: not suspended.get(a["membershipNumber"], False), registered_allocations))
 
   # Get event
   try:

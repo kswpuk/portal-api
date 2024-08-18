@@ -1,0 +1,12 @@
+<p>The following KSWP member has been suspended, and will not be able to attend future events until their suspension has been lifted.</p>
+
+<p><strong>Suspended Member:</strong> {{firstName}} {{surname}} ({{membershipNumber}})</p>
+
+<p>They are currently registered to attend the following future events:</p>
+<ul>
+  {{#each futureEvents}}
+    <li><a href="https://{{portalDomain}}/events/{{id}}">{{id}}</a>: {{status}}</li>
+  {{/each}}
+</ul>
+
+<p>Please liaise with the member, the membership coordinator, and the events coordinator as appropriate to discuss removing them from the above events.</p>

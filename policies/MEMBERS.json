@@ -8,6 +8,7 @@
         "arn:aws:execute-api:*:*:*/*/PUT/members/*",
         "arn:aws:execute-api:*:*:*/*/DELETE/members/*",
         "arn:aws:execute-api:*:*:*/*/POST/members/compare",
+        "arn:aws:execute-api:*:*:*/*/PATCH/members/*/suspended",
         "arn:aws:execute-api:*:*:*/*/GET/applications",
         "arn:aws:execute-api:*:*:*/*/GET/applications/*",
         "arn:aws:execute-api:*:*:*/*/DELETE/applications/*",

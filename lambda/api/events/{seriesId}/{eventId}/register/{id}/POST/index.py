@@ -12,10 +12,12 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 ELIGIBILITY_ARN = os.getenv('ELIGIBILITY_ARN')
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
 EVENT_INSTANCE_TABLE = os.getenv('EVENT_INSTANCE_TABLE')
+SUSPENDED_ARN = os.getenv('SUSPENDED_ARN')
 
 logger.info(f"ELIGIBILITY_ARN = {ELIGIBILITY_ARN}")
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_INSTANCE_TABLE = {EVENT_INSTANCE_TABLE}")
+logger.info(f"SUSPENDED_ARN = {SUSPENDED_ARN}")
 
 headers = {
   "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
@@ -95,7 +97,28 @@ def handler(event, context):
     }
     
   elif current_status == "UNREGISTERED":
-    # Check applicant meets eligibility criteria
+    # Check member isn't suspended
+    try:
+      suspended = json.loads(lambda_client.invoke(
+        FunctionName=SUSPENDED_ARN,
+        Payload=json.dumps({
+          "membershipNumbers": [membership_number]
+        })
+      )['Payload'].read())
+    except Exception as e:
+      logger.error(f"Unable to confirm member {membership_number} is not suspended: {str(e)}")
+      raise e
+    
+    if suspended.get(membership_number, False):
+      return {
+        "statusCode": 422,
+        "headers": headers,
+        "body": json.dumps({
+          "message": "Cannot register for events whilst suspended"
+        })
+      }
+
+    # Check member meets eligibility criteria
     try:
       eligible = json.loads(lambda_client.invoke(
         FunctionName=ELIGIBILITY_ARN,

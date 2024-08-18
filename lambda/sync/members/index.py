@@ -12,11 +12,16 @@ logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
 API_KEY_SECRET_NAME = os.getenv('API_KEY_SECRET_NAME')
 APPLICATION_ACCEPTED_TEMPLATE = os.getenv('APPLICATION_ACCEPTED_TEMPLATE')
 COGNITO_PHONE = (os.getenv('COGNITO_PHONE', 'false').lower() == "true")
+EVENTS_EMAIL = os.getenv('EVENTS_EMAIL')
+FUTURE_EVENTS_LAMBDA = os.getenv('FUTURE_EVENTS_LAMBDA')
 MAILCHIMP_LIST_ID = os.getenv('MAILCHIMP_LIST_ID')
 MAILCHIMP_SERVER_PREFIX = os.getenv('MAILCHIMP_SERVER_PREFIX')
 MEMBERS_EMAIL = os.getenv('MEMBERS_EMAIL')
 PHOTO_BUCKET_NAME = os.getenv('PHOTO_BUCKET_NAME')
 PORTAL_DOMAIN = os.getenv('PORTAL_DOMAIN')
+SUSPENDED_TEMPLATE = os.getenv('SUSPENDED_TEMPLATE')
+SUSPENDED_EVENTS_TEMPLATE = os.getenv('SUSPENDED_EVENTS_TEMPLATE')
+UNSUSPENDED_TEMPLATE = os.getenv('UNSUSPENDED_TEMPLATE')
 USER_POOL = os.getenv('USER_POOL')
 
 MANAGER_GROUP = os.getenv('MANAGER_GROUP')
@@ -31,11 +36,16 @@ STANDARD_GROUP = os.getenv('STANDARD_GROUP')
 logger.info(f"API_KEY_SECRET_NAME = {API_KEY_SECRET_NAME}")
 logger.info(f"APPLICATION_ACCEPTED_TEMPLATE = {APPLICATION_ACCEPTED_TEMPLATE}")
 logger.info(f"COGNITO_PHONE = {COGNITO_PHONE}")
+logger.info(f"EVENTS_EMAIL = {EVENTS_EMAIL}")
+logger.info(f"FUTURE_EVENTS_LAMBDA = {FUTURE_EVENTS_LAMBDA}")
 logger.info(f"MAILCHIMP_LIST_ID = {MAILCHIMP_LIST_ID}")
 logger.info(f"MAILCHIMP_SERVER_PREFIX = {MAILCHIMP_SERVER_PREFIX}")
 logger.info(f"MEMBERS_EMAIL = {MEMBERS_EMAIL}")
 logger.info(f"PHOTO_BUCKET_NAME = {PHOTO_BUCKET_NAME}")
 logger.info(f"PORTAL_DOMAIN = {PORTAL_DOMAIN}")
+logger.info(f"SUSPENDED_TEMPLATE = {SUSPENDED_TEMPLATE}")
+logger.info(f"SUSPENDED_EVENTS_TEMPLATE = {SUSPENDED_EVENTS_TEMPLATE}")
+logger.info(f"UNSUSPENDED_TEMPLATE = {UNSUSPENDED_TEMPLATE}")
 logger.info(f"USER_POOL = {USER_POOL}")
 
 logger.info(f"MANAGER_GROUP = {MANAGER_GROUP}")
@@ -49,6 +59,7 @@ logger.info(f"STANDARD_GROUP = {STANDARD_GROUP}")
 
 # AWS Clients
 cognito = boto3.client('cognito-idp')
+lambda_client = boto3.client('lambda')
 secrets = boto3.client('secretsmanager')
 ses = boto3.client('ses')
 s3 = boto3.client('s3')
@@ -88,6 +99,7 @@ def handler(event, context):
     elif record['eventName'] == "MODIFY":
       update_user(membershipNumber, record['dynamodb']['NewImage'], record['dynamodb']['OldImage'])
       update_user_groups(membershipNumber, record['dynamodb']['NewImage'], record['dynamodb']['OldImage'])
+      check_suspension(membershipNumber, record['dynamodb']['NewImage'], record['dynamodb']['OldImage'])
     elif record['eventName'] == "REMOVE":
       delete_user(membershipNumber)
       unsubscribe_from_mailchimp(membershipNumber, record['dynamodb']['OldImage'])
@@ -332,6 +344,103 @@ def get_cognito_group(role):
     return SOCIALS_GROUP
   else:
     return None
+
+def check_suspension(membershipNumber, newImage, oldImage):
+  oldSuspension = oldImage.get('suspended', False).get('BOOL')
+  newSuspension = newImage.get('suspended', False).get('BOOL')
+
+  if oldSuspension == newSuspension:
+    # No change, so exit
+    return
+  
+  if newSuspension == True:
+    send_suspended_email(membershipNumber, newImage)
+
+    # Check if allocated to any events, and if so send an e-mail to the events coordinator (utils/members/future_events)
+    try:
+      future_events = json.loads(lambda_client.invoke(
+        FunctionName=FUTURE_EVENTS_LAMBDA,
+        Payload=json.dumps({
+          "membershipNumber": membershipNumber
+        })
+      )['Payload'].read())
+
+    except Exception as e:
+      logger.error(f"Unable to get list of future events for member {membershipNumber}: {str(e)}")
+      future_events = {}
+    
+    if len(future_events) > 0:
+      send_suspended_events_email(membershipNumber, newImage, future_events)
+
+  else:
+    send_unsuspended_email(membershipNumber, newImage)
+
+
+def send_suspended_email(membershipNumber, newImage):
+  try:
+    ses.send_templated_email(
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
+      Destination={
+        'ToAddresses': [
+          '"'+newImage['firstName']['S']+' '+newImage['surname']['S']+'" <'+newImage['email']['S']+'>',
+        ]
+      },
+      ReplyToAddresses=[
+        MEMBERS_EMAIL
+      ],
+      ReturnPath='bounces@kswp.org.uk',
+      Template=SUSPENDED_TEMPLATE,
+      TemplateData=json.dumps({
+        'name': newImage['firstName']['S']
+      })
+    )
+  except Exception as e:
+    logger.error(f"Unable to send {SUSPENDED_TEMPLATE} e-mail to {membershipNumber} ({newImage['email']['S']}): {str(e)}")
+
+
+def send_suspended_events_email(membershipNumber, newImage, futureEvents):
+  try:
+    ses.send_templated_email(
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
+      Destination={
+        'ToAddresses': [
+          EVENTS_EMAIL,
+        ]
+      },
+      ReturnPath='bounces@kswp.org.uk',
+      Template=SUSPENDED_EVENTS_TEMPLATE,
+      TemplateData=json.dumps({
+        'firstName': newImage['firstName']['S'],
+        'surname': newImage['surname']['S'],
+        'membershipNumber': membershipNumber,
+        'portalDomain': PORTAL_DOMAIN,
+        'futureEvents': [{"id": k, "status": v} for k,v in futureEvents.items()]
+      })
+    )
+  except Exception as e:
+    logger.error(f"Unable to send {SUSPENDED_EVENTS_TEMPLATE} e-mail to events@kswp.org.uk: {str(e)}")
+
+
+def send_unsuspended_email(membershipNumber, newImage):
+  try:
+    ses.send_templated_email(
+      Source='"KSWP Portal" <portal@kswp.org.uk>',
+      Destination={
+        'ToAddresses': [
+          '"'+newImage['firstName']['S']+' '+newImage['surname']['S']+'" <'+newImage['email']['S']+'>',
+        ]
+      },
+      ReplyToAddresses=[
+        MEMBERS_EMAIL
+      ],
+      ReturnPath='bounces@kswp.org.uk',
+      Template=UNSUSPENDED_TEMPLATE,
+      TemplateData=json.dumps({
+        'name': newImage['firstName']['S']
+      })
+    )
+  except Exception as e:
+    logger.error(f"Unable to send {UNSUSPENDED_TEMPLATE} e-mail to {membershipNumber} ({newImage['email']['S']}): {str(e)}")
 
 
 def delete_user(membershipNumber):

@@ -89,7 +89,7 @@ def handler(event, context):
   
   member_projection = "membershipNumber,firstName,preferredName,surname"
   if COMMITTEE_GROUP in groups:
-    member_projection = "membershipNumber,firstName,preferredName,surname,email,receivedNecker"
+    member_projection = "membershipNumber,firstName,preferredName,surname,email,receivedNecker,suspended"
 
   enh_allocations = []
   for allocation in allocations:

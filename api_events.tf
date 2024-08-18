@@ -597,10 +597,20 @@ module "events_seriesId_eventId_allocate_id_DELETE" {
         aws_dynamodb_table.event_allocation_table.arn
       ]
     }
+
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_members_suspended.lambda_function_arn
+      ]
+    }
   }
 
   lambda_env = {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    SUSPENDED_ARN           = module.utils_members_suspended.lambda_function_arn
   }
 
   lambda_architecture = local.lambda_architecture
@@ -664,7 +674,8 @@ module "events_seriesId_eventId_allocate_suggest_GET" {
         "lambda:InvokeFunction"
       ]
       resources = [
-        module.utils_events_weighting.lambda_function_arn
+        module.utils_events_weighting.lambda_function_arn,
+        module.utils_members_suspended.lambda_function_arn
       ]
     }
   }
@@ -672,6 +683,7 @@ module "events_seriesId_eventId_allocate_suggest_GET" {
   lambda_env = {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE    = aws_dynamodb_table.event_instance_table.id
+    SUSPENDED_ARN           = module.utils_members_suspended.lambda_function_arn
     WEIGHTING_ARN           = module.utils_events_weighting.lambda_function_arn
   }
 
@@ -744,7 +756,8 @@ module "events_seriesId_eventId_register_id_POST" {
         "lambda:InvokeFunction"
       ]
       resources = [
-        module.utils_events_eligible.lambda_function_arn
+        module.utils_events_eligible.lambda_function_arn,
+        module.utils_members_suspended.lambda_function_arn
       ]
     }
   }
@@ -753,6 +766,7 @@ module "events_seriesId_eventId_register_id_POST" {
     ELIGIBILITY_ARN         = module.utils_events_eligible.lambda_function_arn
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE    = aws_dynamodb_table.event_instance_table.id
+    SUSPENDED_ARN           = module.utils_members_suspended.lambda_function_arn
   }
 
   lambda_architecture = local.lambda_architecture
