@@ -550,10 +550,20 @@ module "events_seriesId_eventId_allocate_PUT" {
         aws_dynamodb_table.event_allocation_table.arn
       ]
     }
+
+    lambda = {
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        module.utils_members_suspended.lambda_function_arn
+      ]
+    }
   }
 
   lambda_env = {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
+    SUSPENDED_ARN           = module.utils_members_suspended.lambda_function_arn
   }
 
   lambda_architecture = local.lambda_architecture
@@ -597,20 +607,10 @@ module "events_seriesId_eventId_allocate_id_DELETE" {
         aws_dynamodb_table.event_allocation_table.arn
       ]
     }
-
-    lambda = {
-      actions = [
-        "lambda:InvokeFunction"
-      ]
-      resources = [
-        module.utils_members_suspended.lambda_function_arn
-      ]
-    }
   }
 
   lambda_env = {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
-    SUSPENDED_ARN           = module.utils_members_suspended.lambda_function_arn
   }
 
   lambda_architecture = local.lambda_architecture

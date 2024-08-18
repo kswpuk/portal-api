@@ -41,9 +41,15 @@ def handler(event, context):
       logger.warn(f"No allocation provided in {a}")
       continue
 
-    membership_numbers = [m for m in a.get("membershipNumbers", []) if not is_suspended(m)]
-
-    logger.info(f"Updating event allocation for {len(membership_numbers)} non-suspended members")
+    if allocation == "ALLOCATED" or allocation == "RESERVE":
+      # Can't allocate suspended members
+      membership_numbers = [m for m in a.get("membershipNumbers", []) if not is_suspended(m)]
+      logger.info(f"Updating event allocation for {len(membership_numbers)} non-suspended members")
+    else:
+      # Any other allocation status is applicable to suspended members (including ATTENDED, as they might have attended prior to suspension)
+      membership_numbers = a.get("membershipNumbers", [])
+      logger.info(f"Updating event allocation for {len(membership_numbers)} members")
+    
 
     for m in membership_numbers:
       # Update allocation
@@ -80,4 +86,4 @@ def is_suspended(membership_number):
     logger.error(f"Unable to get suspension status of member: {str(e)}")
     raise e
   
-  return suspended.get(a["membershipNumber"], False)
+  return suspended.get(membership_number, False)

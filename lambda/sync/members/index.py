@@ -383,6 +383,9 @@ def send_suspended_email(membershipNumber, newImage):
       Destination={
         'ToAddresses': [
           '"'+newImage['firstName']['S']+' '+newImage['surname']['S']+'" <'+newImage['email']['S']+'>',
+        ],
+        'CcAddresses': [
+          MEMBERS_EMAIL
         ]
       },
       ReplyToAddresses=[
@@ -428,6 +431,9 @@ def send_unsuspended_email(membershipNumber, newImage):
       Destination={
         'ToAddresses': [
           '"'+newImage['firstName']['S']+' '+newImage['surname']['S']+'" <'+newImage['email']['S']+'>',
+        ],
+        'CcAddresses': [
+          MEMBERS_EMAIL
         ]
       },
       ReplyToAddresses=[
