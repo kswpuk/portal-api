@@ -361,6 +361,7 @@ module "sync_members" {
     USER_POOL                     = aws_cognito_user_pool.portal.id
 
     MANAGER_GROUP   = aws_cognito_user_group.manager.name
+    PORTAL_GROUP    = aws_cognito_user_group.portal.name
     EVENTS_GROUP    = aws_cognito_user_group.events.name
     MEMBERS_GROUP   = aws_cognito_user_group.members.name
     MONEY_GROUP     = aws_cognito_user_group.money.name

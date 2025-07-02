@@ -63,7 +63,7 @@ def handler(event, context):
   logger.info(f"Confirming member {membershipNumber} exists")
 
   try:
-    member = members_table.get_item(Key={'membershipNumber': membershipNumber}, ProjectionExpression="membershipNumber")['Item']
+    member = members_table.get_item(Key={'membershipNumber': str(membershipNumber)}, ProjectionExpression="membershipNumber")['Item']
   except Exception as e:
     logger.error(f"Unable to confirm member {membershipNumber} exists: {str(e)}")
     return {
@@ -75,8 +75,8 @@ def handler(event, context):
   logger.info("Validating input")
 
   try:
-    newMembershipNumber = int(json.loads(event['body'])['membershipNumber'])
-  except:
+    newMembershipNumber = int(event['body']['membershipNumber'])
+  except Exception as e:
     logger.error(f"Unable to parse new membership number: {str(e)}")
     return {
       "statusCode": 500,
@@ -92,10 +92,12 @@ def handler(event, context):
       "body": "Membership number must be positive"
     }
   
+  # TODO: Confirm membership number is different
+  
   logger.info(f"Confirming member {newMembershipNumber} does not already exist")
 
   try:
-    member = members_table.get_item(Key={'membershipNumber': newMembershipNumber}, ProjectionExpression="membershipNumber")['Item']
+    member = members_table.get_item(Key={'membershipNumber': str(newMembershipNumber)}, ProjectionExpression="membershipNumber")['Item']
 
     logger.error(f"Member {newMembershipNumber} already exists: {str(e)}")
     return {
@@ -105,6 +107,7 @@ def handler(event, context):
     }
   except Exception as e:
     # Do nothing - we want this to fail as the member shouldn't already exist
+    pass
 
   logger.info(f"Getting event allocations for member {membershipNumber}")
   try:
@@ -112,7 +115,7 @@ def handler(event, context):
       IndexName=EVENT_ALLOCATIONS_INDEX,
       KeyConditionExpression="membershipNumber=:membershipNumber",
       ExpressionAttributeValues={
-        ":membershipNumber": membershipNumber
+        ":membershipNumber": str(membershipNumber)
       }
     )['Items']
   except Exception as e:
@@ -125,17 +128,22 @@ def handler(event, context):
 
   logger.info(f"Updating membership number for member {membershipNumber} to {newMembershipNumber}")
   
+  # TODO: Copy photo - must be done prior to deleting from membership table
+
   # Update (delete and recreate) membership table
   logger.info(f"Updating membership table for member {membershipNumber}")
-  replace_dynamodb_item(members_table, {'membershipNumber': membershipNumber}, {'membershipNumber': newMembershipNumber})
+  replace_dynamodb_item(members_table, {'membershipNumber': str(membershipNumber)}, {'membershipNumber': str(newMembershipNumber)})
 
   # Update (delete and recreate) event allocations
   logger.info(f"Updating event allocations table for member {membershipNumber}")
   for allocation in allocations:
     logger.debug(f"Updating membership number for event {allocation['combinedEventId']}")
-    replace_dynamodb_item(event_allocations_table, {'combinedEventId': allocation['combinedEventId'], 'membershipNumber': membershipNumber}, {'combinedEventId': allocation['combinedEventId'], 'membershipNumber': newMembershipNumber})
+    replace_dynamodb_item(event_allocations_table, {'combinedEventId': allocation['combinedEventId'], 'membershipNumber': str(membershipNumber)}, {'combinedEventId': allocation['combinedEventId'], 'membershipNumber': str(newMembershipNumber)})
+
 
   logger.info(f"Successfully updated membership number for member {membershipNumber} to {newMembershipNumber}")
+
+  # TODO: Send an e-mail explaining that their membership number has been changed and that they'll have received the welcome e-mail again?
 
   return {
     "statusCode": 204,

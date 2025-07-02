@@ -38,7 +38,7 @@ event_instance_table = dynamodb.Table(EVENT_INSTANCE_TABLE)
 event_series_table = dynamodb.Table(EVENT_SERIES_TABLE)
 members_table = dynamodb.Table(MEMBERS_TABLE)
 
-event_start_dates = {}
+event_dates = {}
 event_types = {}
 
 def handler(event, context):
@@ -63,11 +63,13 @@ def handler(event, context):
     "NO_SHOW": {}
   }
 
+  dayCount = {}
+
   today = datetime.date.today()
   todayIso = today.isoformat()
   ymd1Yr = f"{today.year - 1}-{today.month:02d}-{today.day:02d}"
 
-  # For each ACTIVE member, count the number of events they've attended in the past year
+  # For each ACTIVE member, count the number of events they've attended in the past year, and the number of days on which they have supported events
   for member in active_members:
     membershipNumber = member["membershipNumber"]
 
@@ -97,14 +99,22 @@ def handler(event, context):
       "NO_SHOW": 0
     }
 
+    days = 0
+
     for allocation in allocations:
       event_type = get_event_type(allocation["combinedEventId"])
       if event_type != "event":
         continue
 
-      start_date = get_start_date(allocation["combinedEventId"])
-      if start_date < ymd1Yr or start_date > todayIso:
+      start_date, end_date = get_event_dates(allocation["combinedEventId"])
+      if start_date is None or end_date is None or start_date < ymd1Yr or start_date > todayIso:
         continue
+
+      if allocation["allocation"] == "ATTENDED":
+        sd = datetime.date.fromisoformat(start_date[:10])
+        ed = datetime.date.fromisoformat(end_date[:10])
+        num_days = abs(ed - sd).days + 1
+        days += num_days
 
       count[allocation["allocation"]] = count.get(allocation["allocation"], 0) + 1
     
@@ -113,12 +123,15 @@ def handler(event, context):
         continue
       
       allocationCount[k][v] = allocationCount[k].get(v, 0) + 1
+    
+    dayCount[days] = dayCount.get(days, 0) + 1
 
   return {
     "statusCode": 200,
     "headers": headers,
     "body": json.dumps({
-      "counts": allocationCount
+      "counts": allocationCount,
+      "days": dayCount
     })
   }
 
@@ -156,9 +169,9 @@ def scan_active_members(**kwargs):
   return results
 
 
-def get_start_date(combined_event_id):
-  if combined_event_id in event_start_dates:
-    return event_start_dates[combined_event_id]
+def get_event_dates(combined_event_id):
+  if combined_event_id in event_dates:
+    return event_dates[combined_event_id]
 
   event_series_id, event_id = combined_event_id.split("/", 1)
 
@@ -171,12 +184,12 @@ def get_start_date(combined_event_id):
     )['Item']
   except Exception as e:
     logger.error(f"Unable to get event instance (Event Series = {event_series_id}, Event ID = {event_id}) from {EVENT_INSTANCE_TABLE}: {str(e)}")
-    raise e
+    return (None, None)
+    #raise e
   
-  event_start_dates[combined_event_id] = instance["startDate"]
+  event_dates[combined_event_id] = (instance["startDate"], instance["endDate"])
 
-  return instance["startDate"]
-
+  return (instance["startDate"], instance["endDate"])
 
 def get_event_type(combined_event_id):
   event_series_id, _ = combined_event_id.split("/", 1)
@@ -192,7 +205,8 @@ def get_event_type(combined_event_id):
     )['Item']
   except Exception as e:
     logger.error(f"Unable to get event series (Event Series = {event_series_id}) from {EVENT_SERIES_TABLE}: {str(e)}")
-    raise e
+    return "unknown"
+    #raise e
   
   event_types[event_series_id] = instance["type"]
 

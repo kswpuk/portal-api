@@ -101,11 +101,11 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
   elif not membershipNumber.isnumeric():
     validationErrors.append("Membership number must be a number")
 
-  firstName = str(application.get("firstName")).strip()
-  if not firstName: #TODO: firstName will actually be None here if firstName is empty... Use .get("")?
+  firstName = str(application.get("firstName", "")).strip()
+  if not firstName:
     validationErrors.append("First name cannot be empty")
   
-  surname = str(application.get("surname")).strip()
+  surname = str(application.get("surname", "")).strip()
   if not surname:
     validationErrors.append("Surname cannot be empty")
 
@@ -114,16 +114,17 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
     dob = None
   else:
     dob = datetime.date.fromisoformat(application.get("dateOfBirth"))
-    if datetime.datetime.now().year - dob.year < 18:
+    eighteenth_birthday = date(dob.year + 18, dob.month, dob.day)
+    if eighteenth_birthday > datetime.date.today():
       validationErrors.append("You must be at least 18 to join the KSWP")
 
-  email = str(application.get("email")).strip().lower()
+  email = str(application.get("email", "")).strip().lower()
   if not email:
     validationErrors.append("E-mail address cannot be empty")
   elif not validate_email(email, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
     validationErrors.append("E-mail address is not valid, or the domain has been blacklisted")
 
-  tel = str(application.get("telephone")).strip()
+  tel = str(application.get("telephone", "")).strip()
   if not tel:
     validationErrors.append("Telephone number cannot be empty")
   else:
@@ -135,17 +136,17 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
     if not phonenumbers.is_valid_number(telephone):
       validationErrors.append("Telephone number is not valid")
 
-  address = str(application.get("address")).strip()
+  address = str(application.get("address", "")).strip()
   if not address:
     validationErrors.append("Address cannot be empty")
   
-  postcode = re.sub(r"\s+", "", str(application.get("postcode")).upper())
+  postcode = re.sub(r"\s+", "", str(application.get("postcode", "")).upper())
   if not postcode:
     validationErrors.append("Postcode cannot be empty")
   elif not validation.is_valid_postcode(postcode):
     validationErrors.append("Postcode is not valid")
   
-  qsaReceived = str(application.get("qsaReceived")).strip()
+  qsaReceived = str(application.get("qsaReceived", "")).strip()
   if not qsaReceived:
     validationErrors.append("Month you received your King's Scout or Queen's Scout Award cannot be empty")
   elif not re.match("^(19|20)[0-9]{2}-(0[1-9]|1[0-2])$", qsaReceived):
@@ -157,21 +158,21 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
     logger.warning("Unable to open evidence as image", extra={"error": str(e)})
     validationErrors.append("Unable to read evidence as image")
 
-  srName = str(application.get("srName")).strip()
+  srName = str(application.get("srName", "")).strip()
   if not srName:
     validationErrors.append("Scout reference name cannot be empty")
   
-  srEmail = str(application.get("srEmail")).strip().lower()
+  srEmail = str(application.get("srEmail", "")).strip().lower()
   if not srEmail:
     validationErrors.append("Scout reference e-mail address cannot be empty")
   elif not validate_email(srEmail, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
     validationErrors.append("Scout reference e-mail address is not valid, or the domain has been blacklisted")
 
-  nsrName = str(application.get("nsrName")).strip()
+  nsrName = str(application.get("nsrName", "")).strip()
   if not nsrName:
     validationErrors.append("Non-Scout reference name cannot be empty")
   
-  nsrEmail = str(application.get("nsrEmail")).strip().lower()
+  nsrEmail = str(application.get("nsrEmail", "")).strip().lower()
   if not nsrEmail:
     validationErrors.append("Non-Scout reference e-mail address cannot be empty")
   elif not validate_email(nsrEmail, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):

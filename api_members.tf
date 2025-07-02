@@ -325,7 +325,7 @@ module "members_id_membershipnumber_POST" {
   depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_name = aws_api_gateway_rest_api.portal.name
-  path          = module.members_id_allocations.resource_path
+  path          = module.members_id_membershipnumber.resource_path
 
   http_method = "POST"
 

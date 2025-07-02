@@ -93,6 +93,13 @@ resource "aws_cognito_user_group" "manager" {
   precedence   = 1
 }
 
+resource "aws_cognito_user_group" "portal" {
+  name         = "PORTAL"
+  user_pool_id = aws_cognito_user_pool.portal.id
+  description  = "KSWP Digital Coordinator"
+  precedence   = 3
+}
+
 resource "aws_cognito_user_group" "members" {
   name         = "MEMBERS"
   user_pool_id = aws_cognito_user_pool.portal.id

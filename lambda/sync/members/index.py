@@ -25,6 +25,7 @@ UNSUSPENDED_TEMPLATE = os.getenv('UNSUSPENDED_TEMPLATE')
 USER_POOL = os.getenv('USER_POOL')
 
 MANAGER_GROUP = os.getenv('MANAGER_GROUP')
+PORTAL_GROUP = os.getenv('PORTAL_GROUP')
 EVENTS_GROUP = os.getenv('EVENTS_GROUP')
 MEMBERS_GROUP = os.getenv('MEMBERS_GROUP')
 MONEY_GROUP = os.getenv('MONEY_GROUP')
@@ -49,6 +50,7 @@ logger.info(f"UNSUSPENDED_TEMPLATE = {UNSUSPENDED_TEMPLATE}")
 logger.info(f"USER_POOL = {USER_POOL}")
 
 logger.info(f"MANAGER_GROUP = {MANAGER_GROUP}")
+logger.info(f"PORTAL_GROUP = {PORTAL_GROUP}")
 logger.info(f"EVENTS_GROUP = {EVENTS_GROUP}")
 logger.info(f"MEMBERS_GROUP = {MEMBERS_GROUP}")
 logger.info(f"MONEY_GROUP = {MONEY_GROUP}")
@@ -332,6 +334,8 @@ def update_user_groups(membershipNumber, newImage, oldImage):
 def get_cognito_group(role):
   if role == "MANAGER":
     return MANAGER_GROUP
+  elif role == "PORTAL":
+    return PORTAL_GROUP
   elif role == "EVENTS":
     return EVENTS_GROUP
   elif role == "MEMBERS":
@@ -346,8 +350,8 @@ def get_cognito_group(role):
     return None
 
 def check_suspension(membershipNumber, newImage, oldImage):
-  oldSuspension = oldImage.get('suspended', False).get('BOOL')
-  newSuspension = newImage.get('suspended', False).get('BOOL')
+  oldSuspension = oldImage.get('suspended', {"BOOL": False}).get('BOOL')
+  newSuspension = newImage.get('suspended', {"BOOL": False}).get('BOOL')
 
   if oldSuspension == newSuspension:
     # No change, so exit
