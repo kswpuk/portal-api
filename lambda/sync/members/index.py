@@ -23,6 +23,7 @@ SUSPENDED_TEMPLATE = os.getenv('SUSPENDED_TEMPLATE')
 SUSPENDED_EVENTS_TEMPLATE = os.getenv('SUSPENDED_EVENTS_TEMPLATE')
 UNSUSPENDED_TEMPLATE = os.getenv('UNSUSPENDED_TEMPLATE')
 USER_POOL = os.getenv('USER_POOL')
+WHATSAPP_LINK = os.getenv('WHATSAPP_LINK')
 
 MANAGER_GROUP = os.getenv('MANAGER_GROUP')
 PORTAL_GROUP = os.getenv('PORTAL_GROUP')
@@ -48,6 +49,7 @@ logger.info(f"SUSPENDED_TEMPLATE = {SUSPENDED_TEMPLATE}")
 logger.info(f"SUSPENDED_EVENTS_TEMPLATE = {SUSPENDED_EVENTS_TEMPLATE}")
 logger.info(f"UNSUSPENDED_TEMPLATE = {UNSUSPENDED_TEMPLATE}")
 logger.info(f"USER_POOL = {USER_POOL}")
+logger.info(f"WHATSAPP_LINK = {WHATSAPP_LINK}")
 
 logger.info(f"MANAGER_GROUP = {MANAGER_GROUP}")
 logger.info(f"PORTAL_GROUP = {PORTAL_GROUP}")
@@ -124,7 +126,8 @@ def send_welcome_email(membershipNumber, newImage):
       Template=APPLICATION_ACCEPTED_TEMPLATE,
       TemplateData=json.dumps({
         'firstName': newImage['firstName']['S'],
-        'portalDomain': PORTAL_DOMAIN
+        'portalDomain': PORTAL_DOMAIN,
+        'whatsappLink': WHATSAPP_LINK
       })
     )
   except Exception as e:

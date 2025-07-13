@@ -359,6 +359,7 @@ module "sync_members" {
     SUSPENDED_EVENTS_TEMPLATE     = aws_ses_template.account_suspended_events.name
     UNSUSPENDED_TEMPLATE          = aws_ses_template.account_unsuspended.name
     USER_POOL                     = aws_cognito_user_pool.portal.id
+    WHATSAPP_LINK                 = var.whatsapp_link
 
     MANAGER_GROUP   = aws_cognito_user_group.manager.name
     PORTAL_GROUP    = aws_cognito_user_group.portal.name

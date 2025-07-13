@@ -41,3 +41,7 @@ variable "money_email" {
   type    = string
   default = "\"KSWP Treasurer\" <money@kswp.org.uk>"
 }
+
+variable "whatsapp_link" {
+  type = string
+}
