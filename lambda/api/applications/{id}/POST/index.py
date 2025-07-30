@@ -114,7 +114,7 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
     dob = None
   else:
     dob = datetime.date.fromisoformat(application.get("dateOfBirth"))
-    eighteenth_birthday = date(dob.year + 18, dob.month, dob.day)
+    eighteenth_birthday = datetime.date(dob.year + 18, dob.month, dob.day)
     if eighteenth_birthday > datetime.date.today():
       validationErrors.append("You must be at least 18 to join the KSWP")
 
