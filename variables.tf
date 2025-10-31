@@ -45,3 +45,8 @@ variable "money_email" {
 variable "whatsapp_link" {
   type = string
 }
+
+variable "alarm_emails" {
+  type = set(string)
+  default = []
+}

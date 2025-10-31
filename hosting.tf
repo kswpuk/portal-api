@@ -90,7 +90,7 @@ resource "aws_cloudfront_distribution" "hosting" {
   depends_on = [aws_s3_bucket.hosting]
 
   origin {
-    domain_name = aws_s3_bucket.hosting.website_endpoint
+    domain_name = aws_s3_bucket_website_configuration.hosting.website_endpoint
     origin_id   = "S3-${local.domain}"
 
     custom_origin_config {
