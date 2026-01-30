@@ -10,6 +10,7 @@
         "arn:aws:execute-api:*:*:*/*/GET/events/_series",
         "arn:aws:execute-api:*:*:*/*/GET/events/*",
         "arn:aws:execute-api:*:*:*/*/GET/events/*/*",
+        "arn:aws:execute-api:*:*:*/*/GET/events/*/_allocations",
         "arn:aws:execute-api:*:*:*/*/POST/events/*/*/register/{membershipNumber}",
         "arn:aws:execute-api:*:*:*/*/GET/events/report",
         "arn:aws:execute-api:*:*:*/*/GET/members",

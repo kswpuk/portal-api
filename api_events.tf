@@ -298,6 +298,49 @@ module "events_seriesId_PUT" {
   lambda_runtime      = local.lambda_runtime
 }
 
+# /events/{seriesId}/_allocations
+
+module "events_seriesId_allocations" {
+  source     = "./api_resource"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
+  rest_api_id = aws_api_gateway_rest_api.portal.id
+  parent_id   = module.events_seriesId.resource_id
+  path_part   = "_allocations"
+}
+
+module "events_seriesId_allocations_GET" {
+  source     = "./api_method_dynamodb"
+  depends_on = [aws_api_gateway_rest_api.portal]
+
+  rest_api_name = aws_api_gateway_rest_api.portal.name
+  path          = module.events_seriesId_allocations.resource_path
+
+  http_method = "GET"
+
+  prefix = var.prefix
+  name   = "events_seriesId_allocations"
+
+  authorizer_id = aws_api_gateway_authorizer.portal.id
+
+  dynamodb_action    = "Scan"
+  dynamodb_table_arn = aws_dynamodb_table.event_allocation_table.arn
+
+  request_template = <<END
+{
+  "TableName": "${aws_dynamodb_table.event_allocation_table.name}",
+  "FilterExpression": "begins_with(combinedEventId, :v)",
+  "ExpressionAttributeValues": {
+    ":v": {
+      "S": "$util.escapeJavaScript($input.params("seriesId"))"
+    }
+  }
+}
+END
+
+  response_template = local.dynamodb_to_array_vtl
+}
+
 # /events/{seriesId}/{eventId}
 
 module "events_seriesId_eventId" {
