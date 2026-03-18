@@ -167,7 +167,7 @@ module "applications_id_POST" {
 
   lambda_layers = [
     # local.powertools_layer_arn
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:71"
+    "arn:aws:lambda:${data.aws_region.current.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:71"
   ]
 
   # lambda_architecture = local.lambda_architecture
@@ -280,7 +280,7 @@ module "applications_id_evidence" {
 }
 
 module "applications_id_evidence_GET" {
-  source     = "./api_method_s3"
+  source     = "./api_method_lambda"
   depends_on = [aws_api_gateway_rest_api.portal]
 
   rest_api_name = aws_api_gateway_rest_api.portal.name
@@ -288,13 +288,33 @@ module "applications_id_evidence_GET" {
 
   http_method = "GET"
 
-  prefix = var.prefix
-  name   = "applications_id_evidence"
+  prefix      = var.prefix
+  name        = "applications_id_evidence"
+  description = "Get application evidence"
 
   authorizer_id = aws_api_gateway_authorizer.portal.id
 
-  s3_bucket = aws_s3_bucket.applications_evidence_bucket.id
-  s3_suffix = ".jpg"
+  lambda_path = "${path.module}/lambda/api/applications/{id}/evidence/GET"
+
+  lambda_policy = {
+    s3 = {
+      actions   = ["s3:GetObject"]
+      resources = ["${aws_s3_bucket.applications_evidence_bucket.arn}/*.jpg"]
+    }
+
+    s3_bucket = {
+      actions   = ["s3:ListBucket"]
+      resources = [aws_s3_bucket.applications_evidence_bucket.arn]
+    }
+  }
+
+  lambda_env = {
+    EXPIRATION        = 600
+    EVIDENCE_BUCKET_NAME = aws_s3_bucket.applications_evidence_bucket.id
+  }
+
+  lambda_architecture = local.lambda_architecture
+  lambda_runtime      = local.lambda_runtime
 }
 
 # /applications/{id}/head

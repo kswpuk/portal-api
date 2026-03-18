@@ -31,7 +31,7 @@ resource "aws_api_gateway_integration" "integration" {
   integration_http_method = var.http_method
 
   type = "AWS"
-  uri  = "arn:aws:apigateway:${data.aws_region.current.name}:s3:path/${var.s3_bucket}/${var.s3_prefix}{key}${var.s3_suffix}"
+  uri  = "arn:aws:apigateway:${data.aws_region.current.region}:s3:path/${var.s3_bucket}/${var.s3_prefix}{key}${var.s3_suffix}"
   
   credentials = aws_iam_role.role.arn
 

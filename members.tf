@@ -21,9 +21,17 @@ resource "aws_dynamodb_table" "members_table" {
 
   global_secondary_index {
     name            = "${var.prefix}-membership_status"
-    hash_key        = "status"
-    range_key       = "membershipExpires"
     projection_type = "ALL"
+
+    key_schema {
+      attribute_name = "status"
+      key_type       = "HASH"
+    }
+
+    key_schema {
+      attribute_name = "membershipExpires"
+      key_type       = "RANGE"
+    }
   }
 
   stream_enabled   = true

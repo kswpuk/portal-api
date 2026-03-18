@@ -89,7 +89,7 @@ def handler(event, context):
   logger.info(f"Allocation weighting = {rules}")
 
   # Check we need to do allocations
-  if attendanceLimit == 0 or len(registered_allocations) <= attendanceLimit or len(registered_allocations) == 0:
+  if attendanceLimit <= 0 or len(registered_allocations) <= attendanceLimit or len(registered_allocations) == 0:
     return {
       "statusCode": 200,
       "headers": headers,

@@ -1,6 +1,6 @@
 locals {
-  powertools_layer_arn = "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:71"
-  pandas_layer_arn = "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python312-Arm64:8"
+  powertools_layer_arn = "arn:aws:lambda:${data.aws_region.current.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:71"
+  pandas_layer_arn = "arn:aws:lambda:${data.aws_region.current.region}:336392948345:layer:AWSSDKPandas-Python312-Arm64:8"
 
   lambda_architecture  = ["arm64"]
   lambda_runtime       = "python3.12"

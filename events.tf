@@ -48,8 +48,12 @@ resource "aws_dynamodb_table" "event_allocation_table" {
 
   global_secondary_index {
     name            = "${var.prefix}-member_event_allocations"
-    hash_key        = "membershipNumber"
     projection_type = "ALL"
+
+    key_schema {
+      attribute_name = "membershipNumber"
+      key_type       = "HASH"
+    }
   }
 
   stream_enabled   = true

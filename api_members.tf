@@ -455,7 +455,7 @@ module "members_id_payment_POST" {
     PORTAL_DOMAIN       = aws_route53_record.portal.fqdn
 
     # We have to build this manually to avoid a dependency cycle
-    SUCCESS_URL = "https://${aws_api_gateway_rest_api.portal.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.prefix}/payments/membership/{CHECKOUT_SESSION_ID}"
+    SUCCESS_URL = "https://${aws_api_gateway_rest_api.portal.id}.execute-api.${data.aws_region.current.region}.amazonaws.com/${var.prefix}/payments/membership/{CHECKOUT_SESSION_ID}"
   }
 
   lambda_architecture = local.lambda_architecture

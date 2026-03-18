@@ -87,7 +87,7 @@ def handler(event, context: LambdaContext):
     results.append({
       **app,
       "submittedAt": int(app["submittedAt"]),
-      "applicationStatus": reference_status.get(app["membershipNumber"], {"scouting": None, "nonScouting": None, "fiveYears": False})
+      "applicationStatus": reference_status.get(app["membershipNumber"], {"scouting": None, "nonScouting": None, "fiveYears": None})
     })
 
   return {
