@@ -54,38 +54,7 @@ resource "aws_iam_role" "backup_role" {
   })
 }
 
-resource "aws_iam_role_policy" "backup" {
-  name = "${var.prefix}-backup-policy"
-  role = aws_iam_role.agw_cloudwatch.id
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "dynamodb:CreateBackup",
-          "dynamodb:DeleteBackup",
-          "dynamodb:DescribeBackup",
-          "dynamodb:ListBackups",
-          "dynamodb:ListTables",
-          "dynamodb:RestoreTableFromBackup",
-          "dynamodb:ListTagsOfResource",
-          "dynamodb:StartAwsBackupJob",
-          # "dynamodb:RestoreTableFromAwsBackup"
-        ],
-        Resource = "*"  # TODO: Can we make this more specific
-      },
-      {
-        Effect = "Allow",
-        Action = [
-          "backup:StartBackupJob",
-          "backup:StopBackupJob",
-          "backup:TagResource",
-          "backup:UntagResource"
-        ],
-        Resource = "*"  # TODO: Can we make this more specific
-      }
-    ]
-  })
+resource "aws_iam_role_policy_attachment" "backup" {
+  role       = aws_iam_role.backup_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
 }
