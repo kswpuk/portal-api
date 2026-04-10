@@ -84,7 +84,7 @@ def handler(event, context):
           "combinedEventId": combined_id,
           "membershipNumber": membership_number
         }
-      )['Attributes']
+      )
     except Exception as e:
       logger.error(f"Unable to update event allocation (Event Series = {event_series_id}, Event ID = {event_id}, Membership Number = {membership_number}) in {EVENT_ALLOCATIONS_TABLE}: {str(e)}")
       raise e
