@@ -584,10 +584,10 @@ module "members_id_role_PATCH" {
   "UpdateExpression": "SET #k = :v",
   "ExpressionAttributeNames": {
     "#k": "role"
-  }
+  },
   "ExpressionAttributeValues": {
     ":v": {
-      "S": $input.json('$.role') == false )
+      "S": "$util.escapeJavaScript($input.path('$.role'))"
     }
   }
 }
