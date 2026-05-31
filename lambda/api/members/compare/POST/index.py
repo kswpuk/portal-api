@@ -35,6 +35,9 @@ def handler(event, context):
       "headers": headers,
       "body": "Member list can not be empty"
     }
+  
+  # Convert list of strings to integers
+  compass_members = [int(m) for m in compass_members]
 
   # Get list from Portal
   try:
