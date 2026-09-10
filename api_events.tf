@@ -422,7 +422,8 @@ module "events_seriesId_eventId_GET" {
         "dynamodb:Query"
       ]
       resources = [
-        aws_dynamodb_table.event_allocation_table.arn
+        aws_dynamodb_table.event_allocation_table.arn,
+        "${aws_dynamodb_table.event_allocation_table.arn}/index/${var.prefix}-member_event_allocations"
       ]
     }
 
@@ -442,6 +443,7 @@ module "events_seriesId_eventId_GET" {
     EVENT_ALLOCATIONS_TABLE = aws_dynamodb_table.event_allocation_table.id
     EVENT_INSTANCE_TABLE    = aws_dynamodb_table.event_instance_table.id
     EVENT_SERIES_TABLE      = aws_dynamodb_table.event_series_table.id
+    MEMBER_EVENT_ALLOCATIONS_INDEX = "${var.prefix}-member_event_allocations"
     MEMBERS_TABLE           = aws_dynamodb_table.members_table.id
   }
 

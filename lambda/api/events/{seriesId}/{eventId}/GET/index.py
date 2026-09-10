@@ -14,6 +14,7 @@ ELIGIBILITY_ARN = os.getenv('ELIGIBILITY_ARN')
 EVENT_ALLOCATIONS_TABLE = os.getenv('EVENT_ALLOCATIONS_TABLE')
 EVENT_INSTANCE_TABLE = os.getenv('EVENT_INSTANCE_TABLE')
 EVENT_SERIES_TABLE = os.getenv('EVENT_SERIES_TABLE')
+MEMBER_EVENT_ALLOCATIONS_INDEX = os.getenv('MEMBER_EVENT_ALLOCATIONS_INDEX')
 MEMBERS_TABLE = os.getenv('MEMBERS_TABLE')
 
 logger.info(f"COMMITTEE_GROUP = {COMMITTEE_GROUP}")
@@ -21,6 +22,7 @@ logger.info(f"ELIGIBILITY_ARN = {ELIGIBILITY_ARN}")
 logger.info(f"EVENT_ALLOCATIONS_TABLE = {EVENT_ALLOCATIONS_TABLE}")
 logger.info(f"EVENT_INSTANCE_TABLE = {EVENT_INSTANCE_TABLE}")
 logger.info(f"EVENT_SERIES_TABLE = {EVENT_SERIES_TABLE}")
+logger.info(f"MEMBER_EVENT_ALLOCATIONS_INDEX = {MEMBER_EVENT_ALLOCATIONS_INDEX}")
 logger.info(f"MEMBERS_TABLE = {MEMBERS_TABLE}")
 
 headers = {
@@ -92,6 +94,7 @@ def handler(event, context):
     member_projection = "membershipNumber,firstName,preferredName,surname,email,receivedNecker,suspended"
 
   enh_allocations = []
+  event_start_date = instance["startDate"][:10]
   for allocation in allocations:
     member = {}
     try:
@@ -106,9 +109,17 @@ def handler(event, context):
       logger.error(f"Unable to get member details for {allocation['membershipNumber']} from {MEMBERS_TABLE}: {str(e)}")
       # Don't raise, just continue
     
+    try:
+      experience = get_experience(allocation['membershipNumber'], event_series_id, event_start_date)
+    except Exception as e:
+      logger.error(f"Unable to get experience for {allocation['membershipNumber']}: {str(e)}")
+      experience = 0
+      # Don't raise, just continue
+    
     enh_allocations.append({
       "membershipNumber": allocation['membershipNumber'],
-      "allocation": allocation['allocation']
+      "allocation": allocation['allocation'],
+      "experience": experience
     } | member)
   
   if membership_number is not None:
@@ -170,3 +181,30 @@ def get_allocations(combined_event_id):
       break
 
   return results
+
+def get_experience(membership_id, event_series_id, event_start_date):
+  results = []
+  last_evaluated_key = None
+
+  while True:
+    if last_evaluated_key:
+      response = event_allocations_table.query(
+        IndexName=MEMBER_EVENT_ALLOCATIONS_INDEX,
+        KeyConditionExpression=Key("membershipNumber").eq(membership_id),
+        FilterExpression=Attr("combinedEventId").begins_with(f"{event_series_id}/") & Attr("combinedEventId").lt(f"{event_series_id}/{event_start_date}") & Attr("allocation").eq("ATTENDED"),
+        ExclusiveStartKey=last_evaluated_key,
+      )
+    else:
+      response = event_allocations_table.query(
+        IndexName=MEMBER_EVENT_ALLOCATIONS_INDEX,
+        KeyConditionExpression=Key("membershipNumber").eq(membership_id),
+        FilterExpression=Attr("combinedEventId").begins_with(f"{event_series_id}/") & Attr("combinedEventId").lt(f"{event_series_id}/{event_start_date}") & Attr("allocation").eq("ATTENDED")
+      )
+
+      last_evaluated_key = response.get('LastEvaluatedKey')    
+      results.extend(response['Items'])
+        
+    if not last_evaluated_key:
+      break
+
+  return len(results)
