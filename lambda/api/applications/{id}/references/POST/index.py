@@ -11,7 +11,14 @@ import json
 import os
 import re
 import time
-from validate_email import validate_email
+from email_validator import validate_email, EmailNotValidError
+
+def is_valid_email(email_str):
+  try:
+    validate_email(email_str, check_deliverability=False)
+    return True
+  except EmailNotValidError:
+    return False
 
 # Configure logging
 logger = Logger()
@@ -103,7 +110,7 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
 
   if not email:
     validationErrors.append("E-mail address cannot be empty")
-  elif not validate_email(email, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
+  elif not is_valid_email(email):
     validationErrors.append("E-mail address is not valid, or the domain has been blacklisted")
 
   relationship = str(reference.get("relationship")).strip()

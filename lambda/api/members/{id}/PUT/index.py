@@ -6,7 +6,14 @@ import phonenumbers
 import re
 import time
 from ukpostcodeutils import validation
-from validate_email import validate_email
+from email_validator import validate_email, EmailNotValidError
+
+def is_valid_email(email_str):
+  try:
+    validate_email(email_str, check_deliverability=False)
+    return True
+  except EmailNotValidError:
+    return False
 
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
@@ -53,7 +60,7 @@ def handler(event, context):
   email = str(member.get("email")).strip()
   if not email:
     validationErrors.append("E-mail address cannot be empty")
-  elif not validate_email(email, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
+  elif not is_valid_email(email):
     validationErrors.append("E-mail address is not valid, or the domain has been blacklisted")
 
   tel = str(member.get("telephone")).strip()

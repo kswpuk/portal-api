@@ -166,8 +166,7 @@ module "applications_id_POST" {
   # Pillow requires x86_64
 
   lambda_layers = [
-    # local.powertools_layer_arn
-    "arn:aws:lambda:${data.aws_region.current.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:71"
+    local.powertools_layer_arn_x86
   ]
 
   # lambda_architecture = local.lambda_architecture

@@ -14,7 +14,8 @@ module "auth_lambda" {
   handler       = "auth.handler"
 
   runtime       = local.lambda_runtime
-  architectures = local.lambda_architecture
+  # cryptography contains compiled binary wheels (x86_64 when built locally)
+  architectures = ["x86_64"]
 
   attach_cloudwatch_logs_policy = true
   attach_policy_statements      = true

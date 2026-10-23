@@ -14,7 +14,14 @@ from PIL import Image
 import re
 import time
 from ukpostcodeutils import validation
-from validate_email import validate_email
+from email_validator import validate_email, EmailNotValidError
+
+def is_valid_email(email_str):
+  try:
+    validate_email(email_str, check_deliverability=False)
+    return True
+  except EmailNotValidError:
+    return False
 
 logger = Logger()
 metrics = Metrics()
@@ -121,7 +128,7 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
   email = str(application.get("email", "")).strip().lower()
   if not email:
     validationErrors.append("E-mail address cannot be empty")
-  elif not validate_email(email, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
+  elif not is_valid_email(email):
     validationErrors.append("E-mail address is not valid, or the domain has been blacklisted")
 
   tel = str(application.get("telephone", "")).strip()
@@ -165,7 +172,7 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
   srEmail = str(application.get("srEmail", "")).strip().lower()
   if not srEmail:
     validationErrors.append("Scout reference e-mail address cannot be empty")
-  elif not validate_email(srEmail, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
+  elif not is_valid_email(srEmail):
     validationErrors.append("Scout reference e-mail address is not valid, or the domain has been blacklisted")
 
   nsrName = str(application.get("nsrName", "")).strip()
@@ -175,7 +182,7 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
   nsrEmail = str(application.get("nsrEmail", "")).strip().lower()
   if not nsrEmail:
     validationErrors.append("Non-Scout reference e-mail address cannot be empty")
-  elif not validate_email(nsrEmail, check_format=True, check_blacklist=True, check_dns=False, check_smtp=False):
+  elif not is_valid_email(nsrEmail):
     validationErrors.append("Non-Scout reference e-mail address is not valid, or the domain has been blacklisted")
   
   if srEmail == email:
