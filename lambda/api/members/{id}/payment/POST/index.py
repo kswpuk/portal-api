@@ -34,12 +34,14 @@ members_table = dynamodb.Table(MEMBERS_TABLE)
 
 # Get Stripe
 try:
-  stripe.api_key = json.loads(secrets.get_secret_value(
-    SecretId=API_KEY_SECRET_NAME
-  )['SecretString'])['stripe']
+  stripe_client = stripe.StripeClient(
+    json.loads(secrets.get_secret_value(
+      SecretId=API_KEY_SECRET_NAME
+    )['SecretString'])['stripe']
+  )
 except Exception as e:
   logger.error(f"Failed to get Stripe secret key from Secrets Manager: {str(e)}")
-  stripe.api_key = None
+  stripe_client = None
 
 def handler(event, context):
   membershipNumber = event['pathParameters']['id']
@@ -78,25 +80,27 @@ def handler(event, context):
   logger.info(f"Initializing Stripe Checkout session for {membershipNumber}")
   
   try:
-    session = stripe.checkout.Session.create(
-      customer_email=member['email'],
-      line_items=[{
-        'price_data': {
-          'currency': 'gbp',
-          'product_data': {
-            'name': 'KSWP Membership',
-            'description': 'Annual KSWP membership fee'
+    session = stripe_client.v1.checkout.sessions.create(
+      params={
+        'customer_email': member['email'],
+        'line_items': [{
+          'price_data': {
+            'currency': 'gbp',
+            'product_data': {
+              'name': 'KSWP Membership',
+              'description': 'Annual KSWP membership fee'
+            },
+            'unit_amount': 500,
           },
-          'unit_amount': 500,
-        },
-        'quantity': 1,
-      }],
-      mode='payment',
-      success_url=SUCCESS_URL,
-      cancel_url=f"https://{PORTAL_DOMAIN}/user/pay",
-      metadata={
-        'membershipNumber': membershipNumber,
-        'memberName': f"{member['firstName']} {member['surname']}"
+          'quantity': 1,
+        }],
+        'mode': 'payment',
+        'success_url': SUCCESS_URL,
+        'cancel_url': f"https://{PORTAL_DOMAIN}/user/pay",
+        'metadata': {
+          'membershipNumber': membershipNumber,
+          'memberName': f"{member['firstName']} {member['surname']}"
+        }
       }
     )
   except Exception as e:

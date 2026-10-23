@@ -32,12 +32,14 @@ members_table = dynamodb.Table(MEMBERS_TABLE)
 
 # Get Stripe
 try:
-  stripe.api_key = json.loads(secrets.get_secret_value(
-    SecretId=API_KEY_SECRET_NAME
-  )['SecretString'])['stripe']
+  stripe_client = stripe.StripeClient(
+    json.loads(secrets.get_secret_value(
+      SecretId=API_KEY_SECRET_NAME
+    )['SecretString'])['stripe']
+  )
 except Exception as e:
   logger.error(f"Failed to get Stripe secret key from Secrets Manager: {str(e)}")
-  stripe.api_key = None
+  stripe_client = None
 
 def handler(event, context):
   session_id = event['pathParameters']['session']
@@ -52,7 +54,7 @@ def handler(event, context):
   logger.info(f"Getting Stripe session details for {session_id}")
 
   try:
-    session = stripe.checkout.Session.retrieve(session_id)
+    session = stripe_client.v1.checkout.sessions.retrieve(session_id)
   except Exception as e:
     logger.error(f"Failed to get Stripe session details: {str(e)}")
     return {
